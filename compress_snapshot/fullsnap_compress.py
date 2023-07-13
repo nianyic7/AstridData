@@ -68,9 +68,14 @@ def compress(col, idata):
         odata[mask] = np.power(idata[mask], 0.2).astype(dt)
         mask = idata < 0
         odata[mask] = -np.power(-idata[mask], 0.2).astype(dt)
-        mask_nan = np.isnan(odata)
-        if mask_nan.any():
-            print("Nan after compression, original data:", idata[mask_nan], flush=True)
+        # note isfinite includes nan and inf checks
+        mask_err = ~np.isfinite(odata)
+        if mask_err.any():
+            print(
+                "Invalid data after compression in block %s, original data:" % col,
+                idata[mask_err],
+                flush=True,
+            )
 
     return odata
 
@@ -135,16 +140,16 @@ def rewrite_chunk(bf_r, bf_w, rank, Ntot, size, blockname, oblock):
         if not np.any(mask):
             continue
         # check NaN
-        mask_nan = np.isnan(rdata)
-        if mask_nan.any():
-            inan = idata[mask_nan]
-            onan = odata[mask_nan]
+        mask_err = ~np.isfinite(rdata)
+        if mask_err.any():
+            inan = idata[mask_err]
+            onan = odata[mask_err]
             print(
-                "WARNING: NaN data after recovery in col %s" % (blockname,),
+                "WARNING: invalid data after recovery in col %s" % (blockname),
                 flush=True,
             )
-            print("Original data: ", inan, flush=True)
-            print("Compressed data:", onan, flush=True)
+            print("Original data: ", inan[mask_err], flush=True)
+            print("Compressed data:", onan[mask_err], flush=True)
 
         # check relative err within tolorance
         rel_err = np.abs(idata[mask] - rdata[mask]) / np.abs(idata[mask])
