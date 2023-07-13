@@ -39,7 +39,7 @@ def compress(col, idata):
     """
     Transform and then compress data according to column properties
     and datatypes.
-    Current transformation is 5th root then compress to ensure no overflow
+    Current transformation is 10th root then compress to ensure no overflow
 
     Args:
         col (str): data column name, e.g. "Position"
@@ -65,9 +65,9 @@ def compress(col, idata):
         dt = TypeMap[idata.dtype]
         odata = np.zeros_like(idata, dtype=dt)
         mask = idata > 0
-        odata[mask] = np.power(idata[mask], 0.2).astype(dt)
+        odata[mask] = np.power(idata[mask], 0.1).astype(dt)
         mask = idata < 0
-        odata[mask] = -np.power(-idata[mask], 0.2).astype(dt)
+        odata[mask] = -np.power(-idata[mask], 0.1).astype(dt)
         # note isfinite includes nan and inf checks
         mask_err = ~np.isfinite(odata)
         if mask_err.any():
@@ -100,7 +100,7 @@ def recover(col, odata):
         return odata
     else:
         rdata = odata.astype(np.dtype("float32"))
-        rdata = np.power(rdata, 5)
+        rdata = np.power(rdata, 10)
     return rdata
 
 
