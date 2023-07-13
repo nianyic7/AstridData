@@ -25,7 +25,7 @@ ifile="$dataroot/PART_$snap"
 ofile="$outroot/PART_$snap-compressed"
 codedir="$HOME/AstridData/compression/"
 
-ibrun -n 560 python3 $codedir/fullsnap_compress.py --ifile $ifile --tol 0.03 --ofile $ofile --nfiles 256 --nloops 100 --blocknames  "1/Position" "1/Velocity" "0/Position" "4/Position"
+ibrun -n 560 python3 $codedir/fullsnap_compress.py --ifile $ifile --tol 0.03 --ofile $ofile --nfiles 256 --nloops 100
 done
 
 wait
