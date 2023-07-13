@@ -31,6 +31,7 @@ IntTypes = set(
     ]
 )
 
+# we also do not touch these cols as they may overflow
 KeepCols = set(["ElectronAbundance", "Metallicity", "Metals"])
 
 
