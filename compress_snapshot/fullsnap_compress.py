@@ -32,7 +32,9 @@ IntTypes = set(
 )
 
 # we also do not touch these cols as they may overflow
-KeepCols = set(["ElectronAbundance", "Metallicity", "Metals"])
+# note: found inf in bf['5/BlackholeSwallowTime'], so skip this col for now
+# (it's not huge anyways)
+KeepCols = set(["ElectronAbundance", "Metallicity", "Metals", "BlackholeSwallowTime"])
 
 
 def compress(col, idata):
@@ -136,6 +138,9 @@ def rewrite_chunk(bf_r, bf_w, rank, Ntot, size, blockname, oblock):
 
         odata = compress(col, idata)
         oblock.write(ibeg, odata)
+
+        if col in KeepCols:
+            continue
 
         # recover data and check for NaN and relative errors
         rdata = recover(col, odata)
