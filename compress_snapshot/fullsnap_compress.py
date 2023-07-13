@@ -100,7 +100,11 @@ def recover(col, odata):
         return odata
     else:
         rdata = odata.astype(np.dtype("float32"))
-        rdata = np.power(rdata, 10)
+        mask = rdata > 0
+        rdata[mask] = np.power(rdata[mask], 10)
+        mask = rdata < 0
+        rdata[mask] = -np.power(rdata[mask], 10)
+
     return rdata
 
 
