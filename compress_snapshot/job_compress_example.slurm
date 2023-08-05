@@ -6,29 +6,30 @@
 #SBATCH --ntasks-per-node=28
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=nianyic@andrew.cmu.edu
-#SBATCH --job-name=comp494
-#SBATCH --output=slurm-%x.out
+#SBATCH --job-name=comp-021-025
+#SBATCH --output=%x.out
 
 module load impi/19.0.9
 export I_MPI_HYDRA_TOPOLIB=ipl
 module unload python3
 source activate fast-mpi4py
 
-dataroot="$HOME/ASTRID2_PIG"
-outroot="$HOME/scratch3/Astrid/PART_compressed"
-mkdir -p $outroot
+dataroot="$HOME/scratch3/Astrid/PART_temp"
 
-
-for snap in 494 
+for snap in 021 022 025
 do
 ifile="$dataroot/PART_$snap"
-ofile="$outroot/PART_$snap-compressed"
-codedir="$HOME/AstridData/compression/"
+ofile="$dataroot/PART_$snap-compressed"
+codedir="$HOME/AstridData/compress_snapshot"
 
 ibrun -n 560 python3 $codedir/fullsnap_compress.py --ifile $ifile --tol 0.03 --ofile $ofile --nfiles 256 --nloops 100
-done
 
-wait
 echo "Done with compressing"
+
+cp -r $ifile/Header $ofile
+cp -r $ifile/Neutrino $ofile
+
+echo "copied over header and neutrino"
+done
 
 date
