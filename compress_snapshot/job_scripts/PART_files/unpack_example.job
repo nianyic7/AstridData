@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH -p small
+#SBATCH -N 2
+#SBATCH --ntasks-per-node 1
+#SBATCH --job-name=up-028
+#SBATCH --output=slurm-%x.out
+#SBATCH --time=12:00:00
+#SBATCH --mail-type=END,FAIL
+#BATCH --mail-user=nianyic@andrew.cmu.edu
+hostname; pwd; date
+
+snap=28
+snap=$(printf %03d $snap)
+data_root_dir="/home1/08942/nianyic/scratch3/Astrid/PART_temp/PART_028_pack"
+out_dir="/home1/08942/nianyic/scratch3/Astrid/PART_temp/PART_$snap/"
+mkdir -p $out_dir
+
+seq 0 44 | srun -N 1 -n 1 xargs -P 1 -d '\n' -I file_num tar -xf $data_root_dir/tar_file.file_num --strip-components=7 -C "$out_dir" &
+seq 44 88 | srun -N 1 -n 1 xargs -P 1 -d '\n' -I file_num tar -xf $data_root_dir/tar_file.file_num --strip-components=7 -C "$out_dir" &
+wait
+echo "done with unpack"
+
+date
+
+EOF
+

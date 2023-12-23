@@ -1,0 +1,283 @@
+TACC:  Starting up job 5796310 
+TACC:  Starting parallel tasks... 
+All blocks to process:
+0/DelayTime
+0/Density
+0/EgyWtDensity
+0/ElectronAbundance
+0/Generation
+0/GroupID
+0/HeIIIIonized
+0/ID
+0/InternalEnergy
+0/Mass
+0/Metallicity
+0/Metals
+0/NeutralHydrogenFraction
+0/Position
+0/SmoothingLength
+0/StarFormationRate
+0/Velocity
+1/GroupID
+1/ID
+1/Mass
+1/Position
+1/Velocity
+4/BirthDensity
+4/Generation
+4/GroupID
+4/ID
+4/LastEnrichmentMyr
+4/Mass
+4/Metallicity
+4/Metals
+4/Position
+4/SmoothingLength
+4/StarFormationTime
+4/TotalMassReturned
+4/Velocity
+5/BlackholeAccretionRate
+5/BlackholeDensity
+5/BlackholeJumpToMinPot
+5/BlackholeKineticFdbkEnergy
+5/BlackholeMass
+5/BlackholeMinPotPos
+5/BlackholeMseed
+5/BlackholeMtrack
+5/BlackholeProgenitors
+5/BlackholeSwallowID
+5/BlackholeSwallowTime
+5/Generation
+5/GroupID
+5/ID
+5/Mass
+5/Position
+5/SmoothingLength
+5/StarFormationTime
+5/Swallowed
+5/Velocity
+Initizlized block: 0/DelayTime
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  float16
+Finished Processing 0/DelayTime    
+time used = 0.2 min:
+Initizlized block: 0/Density
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  float16
+Finished Processing 0/Density      
+time used = 0.6 min:
+Initizlized block: 0/EgyWtDensity
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  float16
+Finished Processing 0/EgyWtDensity 
+time used = 0.6 min:
+Initizlized block: 0/ElectronAbundance
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  float32
+Finished Processing 0/ElectronAbundance
+time used = 0.2 min:
+Initizlized block: 0/Generation
+Nfile = 256     , Ntot = 50497149425    , Old dtype = uint8      New dtype =  uint8
+Finished Processing 0/Generation   
+time used = 0.2 min:
+Initizlized block: 0/GroupID
+Nfile = 256     , Ntot = 50497149425    , Old dtype = uint32     New dtype =  uint32
+Finished Processing 0/GroupID      
+time used = 0.2 min:
+Initizlized block: 0/HeIIIIonized
+Nfile = 256     , Ntot = 50497149425    , Old dtype = uint8      New dtype =  uint8
+Finished Processing 0/HeIIIIonized 
+time used = 0.1 min:
+Initizlized block: 0/ID
+Nfile = 256     , Ntot = 50497149425    , Old dtype = uint64     New dtype =  uint64
+Finished Processing 0/ID           
+time used = 0.3 min:
+Initizlized block: 0/InternalEnergy
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  float16
+Finished Processing 0/InternalEnergy
+time used = 0.6 min:
+Initizlized block: 0/Mass
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  float16
+Finished Processing 0/Mass         
+time used = 0.6 min:
+Initizlized block: 0/Metallicity
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  float32
+Finished Processing 0/Metallicity  
+time used = 0.2 min:
+Initizlized block: 0/Metals
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  ('<f4', (9,))
+Finished Processing 0/Metals       
+time used = 0.9 min:
+Initizlized block: 0/NeutralHydrogenFraction
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  float16
+Finished Processing 0/NeutralHydrogenFraction
+time used = 0.6 min:
+Initizlized block: 0/Position
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float64    New dtype =  ('<f4', (3,))
+Finished Processing 0/Position     
+time used = 0.6 min:
+Initizlized block: 0/SmoothingLength
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  float16
+Finished Processing 0/SmoothingLength
+time used = 0.6 min:
+Initizlized block: 0/StarFormationRate
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  float16
+Finished Processing 0/StarFormationRate
+time used = 0.3 min:
+Initizlized block: 0/Velocity
+Nfile = 256     , Ntot = 50497149425    , Old dtype = float32    New dtype =  ('<f2', (3,))
+Finished Processing 0/Velocity     
+time used = 1.2 min:
+Initizlized block: 1/GroupID
+Nfile = 256     , Ntot = 66319327388    , Old dtype = uint32     New dtype =  uint32
+Finished Processing 1/GroupID      
+time used = 0.3 min:
+Initizlized block: 1/ID
+Nfile = 256     , Ntot = 66319327388    , Old dtype = uint64     New dtype =  uint64
+Finished Processing 1/ID           
+time used = 0.4 min:
+Initizlized block: 1/Mass
+Nfile = 256     , Ntot = 66319327388    , Old dtype = float32    New dtype =  float16
+Finished Processing 1/Mass         
+time used = 0.9 min:
+Initizlized block: 1/Position
+Nfile = 256     , Ntot = 66319327388    , Old dtype = float64    New dtype =  ('<f4', (3,))
+Finished Processing 1/Position     
+time used = 0.7 min:
+Initizlized block: 1/Velocity
+Nfile = 256     , Ntot = 66319327388    , Old dtype = float32    New dtype =  ('<f2', (3,))
+Finished Processing 1/Velocity     
+time used = 1.7 min:
+Initizlized block: 4/BirthDensity
+Nfile = 256     , Ntot = 27412394771    , Old dtype = float32    New dtype =  float16
+Finished Processing 4/BirthDensity 
+time used = 0.4 min:
+Initizlized block: 4/Generation
+Nfile = 256     , Ntot = 27412394771    , Old dtype = uint8      New dtype =  uint8
+Finished Processing 4/Generation   
+time used = 0.1 min:
+Initizlized block: 4/GroupID
+Nfile = 256     , Ntot = 27412394771    , Old dtype = uint32     New dtype =  uint32
+Finished Processing 4/GroupID      
+time used = 0.1 min:
+Initizlized block: 4/ID
+Nfile = 256     , Ntot = 27412394771    , Old dtype = uint64     New dtype =  uint64
+Finished Processing 4/ID           
+time used = 0.2 min:
+Initizlized block: 4/LastEnrichmentMyr
+Nfile = 256     , Ntot = 27412394771    , Old dtype = float32    New dtype =  float16
+Finished Processing 4/LastEnrichmentMyr
+time used = 0.4 min:
+Initizlized block: 4/Mass
+Nfile = 256     , Ntot = 27412394771    , Old dtype = float32    New dtype =  float16
+Finished Processing 4/Mass         
+time used = 0.4 min:
+Initizlized block: 4/Metallicity
+Nfile = 256     , Ntot = 27412394771    , Old dtype = float32    New dtype =  float32
+Finished Processing 4/Metallicity  
+time used = 0.2 min:
+Initizlized block: 4/Metals
+Nfile = 256     , Ntot = 27412394771    , Old dtype = float32    New dtype =  ('<f4', (9,))
+Finished Processing 4/Metals       
+time used = 0.5 min:
+Initizlized block: 4/Position
+Nfile = 256     , Ntot = 27412394771    , Old dtype = float64    New dtype =  ('<f4', (3,))
+Finished Processing 4/Position     
+time used = 0.4 min:
+Initizlized block: 4/SmoothingLength
+Nfile = 256     , Ntot = 27412394771    , Old dtype = float32    New dtype =  float16
+Finished Processing 4/SmoothingLength
+time used = 0.4 min:
+Initizlized block: 4/StarFormationTime
+Nfile = 256     , Ntot = 27412394771    , Old dtype = float32    New dtype =  float16
+Finished Processing 4/StarFormationTime
+time used = 0.4 min:
+Initizlized block: 4/TotalMassReturned
+Nfile = 256     , Ntot = 27412394771    , Old dtype = float32    New dtype =  float16
+Finished Processing 4/TotalMassReturned
+time used = 0.4 min:
+Initizlized block: 4/Velocity
+Nfile = 256     , Ntot = 27412394771    , Old dtype = float32    New dtype =  ('<f2', (3,))
+Finished Processing 4/Velocity     
+time used = 0.8 min:
+Initizlized block: 5/BlackholeAccretionRate
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  float16
+Finished Processing 5/BlackholeAccretionRate
+time used = 0.0 min:
+Initizlized block: 5/BlackholeDensity
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  float16
+Finished Processing 5/BlackholeDensity
+time used = 0.0 min:
+Initizlized block: 5/BlackholeJumpToMinPot
+Nfile = 256     , Ntot = 12426290       , Old dtype = int32      New dtype =  int32
+Finished Processing 5/BlackholeJumpToMinPot
+time used = 0.0 min:
+Initizlized block: 5/BlackholeKineticFdbkEnergy
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  float16
+Finished Processing 5/BlackholeKineticFdbkEnergy
+time used = 0.0 min:
+Initizlized block: 5/BlackholeMass
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  float16
+Finished Processing 5/BlackholeMass
+time used = 0.0 min:
+Initizlized block: 5/BlackholeMinPotPos
+Nfile = 256     , Ntot = 12426290       , Old dtype = float64    New dtype =  ('<f4', (3,))
+Finished Processing 5/BlackholeMinPotPos
+time used = 0.1 min:
+Initizlized block: 5/BlackholeMseed
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  float16
+Finished Processing 5/BlackholeMseed
+time used = 0.0 min:
+Initizlized block: 5/BlackholeMtrack
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  float16
+Finished Processing 5/BlackholeMtrack
+time used = 0.0 min:
+Initizlized block: 5/BlackholeProgenitors
+Nfile = 256     , Ntot = 12426290       , Old dtype = int32      New dtype =  int32
+Finished Processing 5/BlackholeProgenitors
+time used = 0.0 min:
+Initizlized block: 5/BlackholeSwallowID
+Nfile = 256     , Ntot = 12426290       , Old dtype = uint64     New dtype =  uint64
+Finished Processing 5/BlackholeSwallowID
+time used = 0.0 min:
+Initizlized block: 5/BlackholeSwallowTime
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  float32
+Finished Processing 5/BlackholeSwallowTime
+time used = 0.0 min:
+Initizlized block: 5/Generation
+Nfile = 256     , Ntot = 12426290       , Old dtype = uint8      New dtype =  uint8
+Finished Processing 5/Generation   
+time used = 0.0 min:
+Initizlized block: 5/GroupID
+Nfile = 256     , Ntot = 12426290       , Old dtype = uint32     New dtype =  uint32
+Finished Processing 5/GroupID      
+time used = 0.0 min:
+Initizlized block: 5/ID
+Nfile = 256     , Ntot = 12426290       , Old dtype = uint64     New dtype =  uint64
+Finished Processing 5/ID           
+time used = 0.1 min:
+Initizlized block: 5/Mass
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  float16
+Finished Processing 5/Mass         
+time used = 0.0 min:
+Initizlized block: 5/Position
+Nfile = 256     , Ntot = 12426290       , Old dtype = float64    New dtype =  ('<f4', (3,))
+Finished Processing 5/Position     
+time used = 0.1 min:
+Initizlized block: 5/SmoothingLength
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  float16
+Finished Processing 5/SmoothingLength
+time used = 0.0 min:
+Initizlized block: 5/StarFormationTime
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  float16
+Finished Processing 5/StarFormationTime
+time used = 0.0 min:
+Initizlized block: 5/Swallowed
+Nfile = 256     , Ntot = 12426290       , Old dtype = uint8      New dtype =  uint8
+Finished Processing 5/Swallowed    
+time used = 0.0 min:
+Initizlized block: 5/Velocity
+Nfile = 256     , Ntot = 12426290       , Old dtype = float32    New dtype =  ('<f2', (3,))
+Finished Processing 5/Velocity     
+time used = 0.0 min:
+Done!
+TACC:  Shutdown complete. Exiting. 
+Done with compressing
+copied over header and FOF
+Thu Sep 14 16:19:30 CDT 2023
