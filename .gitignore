@@ -1,3 +1,11 @@
+#slurm output
+*.slurm
+*.out
+*/slurm*
+*/*.out
+*/*.slurm
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
