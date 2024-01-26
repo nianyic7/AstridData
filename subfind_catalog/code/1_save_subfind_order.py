@@ -214,6 +214,7 @@ def process_chunk(c):
     else: #no subhalo in the entire chunk
         #------------------ Nothing to do, just write -----------------------
         print('skipping entire chunk:',c,flush=True)
+        sgpIDs = None
         for p in [0,1,4,5]:
             # get orders
             new_order, subID_sorted = get_chunk_newidx_sid(p, Length, Offset, sgpIDs, Ngroups, skipchunk=True)

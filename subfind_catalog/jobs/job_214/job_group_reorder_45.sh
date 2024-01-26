@@ -14,4 +14,4 @@ subroot="$dataroot/subfind/subfind_$snap"
 pigfile="$dataroot/PIG_files/PIG_$snap"
 dest="$dataroot/PIG2/PIG_214_subfind"
 
-mpirun -n 168 python3 group_reorder.py --pigfile $pigfile --dest $dest --blocknames "4/Mass" "4/Metallicity" "4/Position" "4/StarFormationTime" "4/Velocity" "5/BlackholeAccretionRate" "5/BlackholeMass" "5/BlackholeMseed" "5/ID" "5/Position" "5/Velocity" "5/StarFormationTime"
+mpirun -n 168 python3 ../code/3_group_reorder.py --gend 50000000 --pigfile $pigfile --dest $dest --blocknames "4/Mass" "4/Metallicity" "4/Position" "4/StarFormationTime" "4/Velocity" "5/BlackholeAccretionRate" "5/BlackholeMass" "5/BlackholeMseed" "5/ID" "5/Position" "5/Velocity" "5/StarFormationTime"

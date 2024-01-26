@@ -15,8 +15,8 @@ pigfile="$dataroot/PIG2/PIG_$snap"
 dest="$dataroot/PIG2/PIG_214_subfind"
 
 
-mpirun -n 336 python3 ../group_reorder.py --pigfile $pigfile --dest $dest --gstart 0 --gend 50000 --blocknames  "1/Position"
-mpirun -n 336 python3 ../group_reorder.py --pigfile $pigfile --dest $dest --gstart 50000 --gend 200000 --blocknames  "1/Position"
-mpirun -n 336 python3 ../group_reorder.py --pigfile $pigfile --dest $dest --gstart 200000 --gend 2000000 --blocknames "1/Position"
-mpirun -n 336 python3 ../group_reorder.py --pigfile $pigfile --dest $dest --gstart 2000000 --gend 8000000 --blocknames  "1/Position"
-mpirun -n 336 python3 ../group_reorder.py --pigfile $pigfile --dest $dest --gstart 8000000 --gend 50000000 --blocknames  "1/Position"
+mpirun -n 336 python3 ../code/3_group_reorder.py --pigfile $pigfile --dest $dest --gstart 0 --gend 50000 --blocknames  "1/Position" "1/Velocity"
+mpirun -n 336 python3 ../code/3_group_reorder.py --pigfile $pigfile --dest $dest --gstart 50000 --gend 200000 --blocknames  "1/Position" "1/Velocity"
+mpirun -n 336 python3 ../code/3_group_reorder.py --pigfile $pigfile --dest $dest --gstart 200000 --gend 2000000 --blocknames "1/Position" "1/Velocity"
+mpirun -n 336 python3 ../code/3_group_reorder.py --pigfile $pigfile --dest $dest --gstart 2000000 --gend 8000000 --blocknames  "1/Position" "1/Velocity"
+mpirun -n 336 python3 ../code/3_group_reorder.py --pigfile $pigfile --dest $dest --gstart 8000000 --gend 50000000 --blocknames  "1/Position" "1/Velocity"

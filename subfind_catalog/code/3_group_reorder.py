@@ -101,9 +101,12 @@ if __name__ == "__main__":
     
     Nproc2 = max(1,size//2)
     Nproc1 = size - Nproc2
+    print("Proc1: %d Proc2: %d"%(Nproc1,Nproc2),flush=True)
     
     batch1 = max(1000, Ngroups//100)
     batch2 = Ngroups - batch1
+
+    print('Batch1: %d Batch2: %d'%(batch1,batch2),flush=True)
     
     if rank <  Nproc1:
         istart = batch1 * rank // Nproc1 + gstart
