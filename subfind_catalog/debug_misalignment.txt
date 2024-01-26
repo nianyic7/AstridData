@@ -1,0 +1,116 @@
+chunk150 output
+
+Increased GroupSize to 1.25.
+SUBFIND: Number of FOF halos treated with collective SubFind code = 1
+SUBFIND: Number of processors used in different partitions for the collective SubFind code = 12
+SUBFIND: (The adopted size-limit for the collective algorithm was 658994 particles.)
+SUBFIND: The other 25 FOF halos are treated in parallel with serial code
+SUBFIND: particle balance=1.04266
+ALLOCATE: Changing to MaxPart = 832920                                             
+ALLOCATE: Changing to MaxPart = 800310
+ALLOCATE: Changing to MaxPartSph = 199053
+SUBFIND: subfind_exchange() took 0.886181 sec
+SUBFIND: particle balance for processing=1.16586
+SUBFIND-COLLECTIVE, root-task=0: Collectively doing halo 0 of length  7682620  on  12  processors.
+SUBFIND-SERIAL: Start to do 25 small groups (cumulative length 2788) with serial subfind algorithm on 2 processors (root-node=12)
+SUBFIND-SERIAL: processing of serial groups took 0.0247145 sec
+ALLOCATE: Changing to MaxPart = 1033136
+ALLOCATE: Changing to MaxPartSph = 431876
+ALLOCATE: Changing to MaxPart = 1362496
+ALLOCATE: Changing to MaxPart = 2926208
+ALLOCATE: Changing to MaxPart = 2926225
+
+
+
+
+chunk 250
+Increased GroupSize to 1.1.                                                        
+SUBFIND: Number of FOF halos treated with collective SubFind code = 69
+SUBFIND: Number of processors used in different partitions for the collective SubFind code = 276
+SUBFIND: (The adopted size-limit for the collective algorithm was 507989 particles.)
+SUBFIND: The other 619 FOF halos are treated in parallel with serial code
+SUBFIND: particle balance=1.61542
+ALLOCATE: Changing to MaxPart = 1320325
+ALLOCATE: Changing to MaxPart = 1107750
+SUBFIND: subfind_exchange() took 2.44004 sec
+SUBFIND: particle balance for processing=1.02306
+SUBFIND-COLLECTIVE, root-task=0: Collectively doing halo 0 of length  1979754  on  4  processors.
+
+ALLOCATE: Changing to MaxPart = 1107750                                            
+ALLOCATE: Changing to MaxPartSph = 350267
+
+
+chunk99
+SUBFIND: finding total densities around all particles
+SUBFIND: density() took 335.01 sec
+Increased GroupSize to 1.25.                                                       
+SUBFIND: Number of FOF halos treated with collective SubFind code = 1
+SUBFIND: Number of processors used in different partitions for the collective SubFind code = 12
+SUBFIND: (The adopted size-limit for the collective algorithm was 756624 particles.)
+SUBFIND: The other 36 FOF halos are treated in parallel with serial code
+SUBFIND: particle balance=1.02009
+ALLOCATE: Changing to MaxPart = 995132
+ALLOCATE: Changing to MaxPart = 1266537
+ALLOCATE: Changing to MaxPart = 918757
+SUBFIND: subfind_exchange() took 1.3597 sec
+SUBFIND: particle balance for processing=1.16571
+SUBFIND-COLLECTIVE, root-task=0: Collectively doing halo 0 of length  8819765  on  12  processors.
+SUBFIND-SERIAL: Start to do 36 small groups (cumulative length 3888) with serial subfind algorithm on 2 processors (root-node=12)
+SUBFIND-SERIAL: processing of serial groups took 0.0443382 sec
+ALLOCATE: Changing to MaxPart = 1219783
+ALLOCATE: Changing to MaxPartSph = 575816
+ALLOCATE: Changing to MaxPart = 1487123
+ALLOCATE: Changing to MaxPart = 2891052
+ALLOCATE: Changing to MaxPart = 2891103
+
+
+chunk10
+Increased GroupSize to 1.25.                                                       
+SUBFIND: Number of FOF halos treated with collective SubFind code = 1
+SUBFIND: Number of processors used in different partitions for the collective SubFind code = 12
+SUBFIND: (The adopted size-limit for the collective algorithm was 1549671 particles.)
+SUBFIND: The other 98 FOF halos are treated in parallel with serial code
+SUBFIND: particle balance=1.02327
+ALLOCATE: Changing to MaxPart = 2178986
+ALLOCATE: Changing to MaxPart = 1880926
+ALLOCATE: Changing to MaxPartSph = 430291
+SUBFIND: subfind_exchange() took 2.23035 sec
+SUBFIND: particle balance for processing=1.16521
+SUBFIND-COLLECTIVE, root-task=0: Collectively doing halo 0 of length  18056309  on  12  processors.
+SUBFIND-SERIAL: Start to do 98 small groups (cumulative length 16715) with serial subfind algorithm on 2 processors (root-node=12)
+SUBFIND-SERIAL: processing of serial groups took 0.378796 sec
+ALLOCATE: Changing to MaxPart = 2971793
+ALLOCATE: Changing to MaxPartSph = 1521237
+ALLOCATE: Changing to MaxPart = 4743308
+ALLOCATE: Changing to MaxPart = 8998171
+ALLOCATE: Changing to MaxPart = 8998332
+
+
+chunk400
+Increased GroupSize to 1.                                                          
+SUBFIND: Number of FOF halos treated with collective SubFind code = 0
+SUBFIND: Number of processors used in different partitions for the collective SubFind code = 0
+SUBFIND: (The adopted size-limit for the collective algorithm was 284092 particles.)
+
+chunk250: 14 nodes
+Increased GroupSize to 1.1.                                                        
+SUBFIND: Number of FOF halos treated with collective SubFind code = 69
+SUBFIND: Number of processors used in different partitions for the collective SubFind code = 276
+SUBFIND: (The adopted size-limit for the collective algorithm was 507989 particles.
+
+
+
+chunk260: 10 nodes
+Increased GroupSize to 1.25.                                                       
+SUBFIND: Number of FOF halos treated with collective SubFind code = 80
+SUBFIND: Number of processors used in different partitions for the collective SubFind code = 240
+SUBFIND: (The adopted size-limit for the collective algorithm was 570606 particles.)
+SUBFIND: The other 667 FOF halos are treated in parallel with serial code
+SUBFIND: particle balance=1.72688
+ALLOCATE: Changing to MaxPart = 1197021
+ALLOCATE: Changing to MaxPartSph = 273838
+ALLOCATE: Changing to MaxPart = 1348013
+ALLOCATE: Changing to MaxPart = 960942
+SUBFIND: subfind_exchange() took 3.28102 sec
+SUBFIND: particle balance for processing=1.17508
+SUBFIND-COLLECTIVE, root-task=0: Collectively doing halo 0 of length  1676248  on  3  processors.
