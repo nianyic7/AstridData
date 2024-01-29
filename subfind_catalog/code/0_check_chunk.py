@@ -127,8 +127,8 @@ def check_splitted_subhalo(c, tab, grp):
             ax[ii].scatter(0, 0, label='MinPos', color='cyan', s=50)
             ax[ii].set_title('Chunk%d, Sub%d, Mstar %.1e'%(c, itar, mstar))
 
-            plt.savefig(savedir + '/trouble_chunk%d_sub%d.png'%(c, itar), bbox_inches='tight')
-            plt.close(fig)
+        plt.savefig(savedir + '/trouble_chunk%d_sub%d.png'%(c, itar), bbox_inches='tight')
+        plt.close(fig)
     
     
     return trouble_list, sMass[trouble_list]*1e10/0.6774
@@ -224,7 +224,7 @@ if __name__ == "__main__":
     comm.barrier()
     
     chunks = chunk_list[cstart:cend]
-    data = check_chunk(istart, iend)
+    data = check_chunk(istart + cstart, iend + cstart)
     
             
             
