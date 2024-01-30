@@ -108,7 +108,8 @@ def check_splitted_subhalo(c, tab, grp):
         #------------ Plot the largest problematic subhalo -------------------------
         isort = np.argsort(sMass[trouble_list])[::-1]
         
-        fig, ax = plt.subplots(1,2, figsize=(6,6))
+        fig, ax = plt.subplots(1,2, figsize=(9,4.2))
+        box = 250000.
         
         for ii in [0,1]:
             itar = trouble_list[isort[ii]]
@@ -118,6 +119,11 @@ def check_splitted_subhalo(c, tab, grp):
             minpos = tab['Subhalo']['SubhaloPos'][itar]
             pos1 = grp['PartType1']['Coordinates'][beg[1] : end[1]] - minpos
             pos4 = grp['PartType4']['Coordinates'][beg[4] : end[4]] - minpos
+
+            pos1[pos1 > box/2] -= box
+            pos1[pos1 < -box/2] += box
+            pos4[pos4 > box/2] -= box
+            pos4[pos4 < -box/2] += box
 
             mstar = sMass[itar]*1e10/0.6774
 
