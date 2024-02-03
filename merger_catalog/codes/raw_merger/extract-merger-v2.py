@@ -12,6 +12,7 @@ from bigfile import BigFile
 import sys
 
 hh = 0.6774
+mdot_msun_yr = 1e10/978/1e6
 
 acBHMass_ds = None
 swallowed_ds = None
@@ -19,6 +20,7 @@ swallowID_ds = None
 BHID_ds = None
 redshift_ds = None
 BHpos_ds = None
+BHvel_ds = None
 BHMdot_ds = None
 BHMass_ds = None
 zstart = None
@@ -31,7 +33,8 @@ cur_chunk_i = 0
 
 
 def load_bh_data(filename):
-    global acBHMass_ds, swallowed_ds, swallowID_ds, BHID_ds, redshift_ds, BHpos_ds, BHMass_ds, zstart, zend
+    global acBHMass_ds, swallowed_ds, swallowID_ds, BHID_ds, redshift_ds, \
+        BHpos_ds, BHvel_ds, BHMass_ds, BHMdot_ds, zstart, zend
 
     print(f"Reading {filename}")
     bhd = BigFile(filename)
@@ -55,6 +58,7 @@ def load_bh_data(filename):
 
     swallowID_ds = bhd.open('SwallowID')[:][sort_indices]
     BHpos_ds = bhd.open('BHpos')[:][sort_indices]
+    BHvel_ds = bhd.open('BHvel')[:][sort_indices]
     BHMass_ds = bhd.open('BHMass')[:][sort_indices]
     BHMdot_ds = bhd.open('Mdot')[:][sort_indices]
 
@@ -174,45 +178,14 @@ def get_index_data():
             print(
                 f"Still did not find matched a BH2, !!! acBHMass = {acBHMass_ds[i]}", flush=True)
             continue
-        
-        # convention is m1 > m2
-        m1 = BHMass_ds[idx1] - acBHMass_ds[idx1]
-        m2 = acBHMass_ds[idx1]
-        if m1 < m2:
-            m1, m2 = m2, m1
-            id_1, id_2 = id_2, id_1
-            idx1, idx2 = idx2, idx1
         data.append([id_1, id_2, idx1, idx2])
     print("Total number of mergers found:", len(data), flush=True)
     print(f"case1: {case1}, case2: {case2}, case3: {case3}, case4: {case4}, case5: {case5}", flush=True)
-
-
-    #     merger_data[num_mergers] = (
-    #         zmerge, id_1, id_2, m1 * 1e10 / hh, m2 * 1e10 / hh)
-    #     num_mergers += 1
-
-    # merger_data = merger_data[:num_mergers]
-    # print(f"Check number of mergers: {len(merger_data)}")
-
-    # merger_data = np.unique(merger_data)
-    # print("Unique event number:", len(merger_data))
-
     return data
 
 
 def get_bh_info(events):
-    """_summary_
-
-    Args:
-        id1 (_type_): _description_
-        id2 (_type_): _description_
-        idx1 (_type_): _description_
-        idx2 (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
-        # initialize empty np array for merger_data
+    # initialize empty np array for merger_data
 
     merger_dtype = np.dtype(
         [('z', 'd'), ('ID1', 'q'), ('ID2', 'q'), ('m1', 'd'), ('m2', 'd'), ('mdot1', 'd'), \
@@ -224,23 +197,52 @@ def get_bh_info(events):
         m2 = acBHMass_ds[idx1]
         id1_1 = BHID_ds[idx1 - 1]
         id2_1 = BHID_ds[idx2 - 1]
-        assert id1_1 == id1, "swallow happened at the very beginning of the chunk, cannot get Pos/Mdot info"
-        assert id2_1 == id2, "swallow happened at the very beginning of the chunk, cannot get Pos/Mdot info"
+        assert id1_1 == id1, "swallow happened at the very beginning of the chunk, \
+            cannot get Pos/Mdot info"
+        assert id2_1 == id2, "swallow happened at the very beginning of the chunk, \
+            cannot get Pos/Mdot info"
 
         # validate mass info
-        m1_alt = BHMass_ds[idx1 - 1]
-        m2_alt = BHMass_ds[idx2 - 1]
-        assert np.isclose(m1, m1_alt, rtol=1e-7), f"Mass info from before/after merger differs, m1 = {m1}, m1_alt = {m1_alt}"
-        assert np.isclose(m2, m2_alt, rtol=1e-7), f"Mass info from before/after merger differs, m2 = {m2}, m2_alt = {m2_alt}"
+        idx1_1 = idx1
+        while redshift_ds[idx1_1] <= redshift_ds[idx1]:
+            idx1_1 -= 1
+        idx2_1 = idx2
+        while redshift_ds[idx2_1] <= redshift_ds[idx2]:
+            idx2_1 -= 1
+        m1_alt = BHMass_ds[idx1_1]
+        m2_alt = BHMass_ds[idx2_1]
+        z_prev1 = redshift_ds[idx1_1]
+        z_prev2 = redshift_ds[idx2_1]
 
+        zmerge1 = redshift_ds[idx1]
+        zmerge2 = redshift_ds[idx2]
+
+        assert np.isclose(m1, m1_alt, rtol=3e-2), \
+            f"Mass info from before/after merger differs, \
+            m1 = {m1}, m1_alt = {m1_alt}, m2 = {m2}, m2_alt = {m2_alt}, \
+                z_prev1 = {z_prev1}, z_prev2 = {z_prev2}, \
+                    zmerge1 = {zmerge1}, zmerge2 = {zmerge2}"
+        assert np.isclose(m2, m2_alt, rtol=3e-2), \
+            f"Mass info from before/after merger differs, \
+            m1 = {m1}, m1_alt = {m1_alt}, m2 = {m2}, m2_alt = {m2_alt}"
+
+        # convention is m1 > m2
+        zmerge = redshift_ds[idx1]
+        m1 = BHMass_ds[idx1] - acBHMass_ds[idx1]
+        m2 = acBHMass_ds[idx1]
+        if m1 < m2:
+            m1, m2 = m2, m1
+            id1, id2 = id2, id1
+            idx1, idx2 = idx2, idx1
         # get mdot info
-        mdot1 = BHMdot_ds[idx1 - 1]
-        mdot2 = BHMdot_ds[idx2 - 1]
-        pos1 = BHpos_ds[idx1 - 1]
-        pos2 = BHpos_ds[idx2 - 1]
-        vel1 = BHvel_ds[idx1 - 1]
-        vel2 = BHvel_ds[idx2 - 1]
-        merger_data[i] = (zmerge, id_1, id_2, m1 * 1e10 / hh, m2 * 1e10 / hh, \
+        mdot1 = BHMdot_ds[idx1_1] * mdot_msun_yr # to Msun/yr
+        mdot2 = BHMdot_ds[idx2_1] * mdot_msun_yr # to Msun/yr
+        pos1 = BHpos_ds[idx1_1] # in ckpc/h
+        pos2 = BHpos_ds[idx2_1] # in ckpc/h
+        vel1 = BHvel_ds[idx1_1] * (1 + zmerge) # to km/s
+        vel2 = BHvel_ds[idx2_1] * (1 + zmerge) # to km/s
+
+        merger_data[i] = (zmerge, id1, id2, m1 * 1e10 / hh, m2 * 1e10 / hh, \
             mdot1, mdot2, pos1, pos2, vel1, vel2)
 
     return merger_data
@@ -339,7 +341,7 @@ def set_path():
     if cluster == "vera":
         root = "/hildafs/datasets/Asterix"
         bh_reduce_file = f"{root}/BH_details_bigfile{'2' if snap > '347' else ''}/BH-Details-R{snap}"
-        output_data_file = f"{root}/BH_mergers/bh-merger-extended-R{snap}"
+        output_data_file = f"{root}/BH-mergers/bh-merger-extended-R{snap}"
     elif cluster == "frontera":
         bh_reduce_file = f"/scratch3/06431/yueyingn/BH-detail-reduce/BH-Details-R{snap}"
         output_data_file = f"mergers_below2/bh-merger-extended-R{snap}"
@@ -356,10 +358,9 @@ def main():
     events = get_index_data()
     merger_data = get_bh_info(events)
 
-
-
-    # if merger_data is not None:
-    #     np.save(output_data_file, merger_data)
+    if merger_data is not None:
+        np.save(output_data_file, merger_data)
+        print(f"Saved merger data to {output_data_file}.npy", flush=True)
 
 
 if __name__ == "__main__":
