@@ -112,8 +112,6 @@ def get_swallowed_events():
 
 
 
-
-
 def get_index_data():
     index1_to_ID1 = get_acBH_events() # indices of BH1 at merger
     ID2_to_index2, ID2_to_ID1 = get_swallowed_events() # indices of BH2 at merger, note: this may be a subset of ID1_to_index1
