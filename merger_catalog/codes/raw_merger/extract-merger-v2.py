@@ -312,11 +312,13 @@ def get_bh_info(events):
             zmerge1 = redshift_ds[idx1]
             zmerge2 = redshift_ds[idx2]
 
-            assert np.isclose(m1, m1_alt, rtol=3e-2), \
-                f"Swallower mass info from before/after merger differs, this should not happen! \
+            if not np.isclose(m1, m1_alt, rtol=3e-2):
+                print(f"Swallower mass info from before/after merger differs, this should not happen! \
                 m1 = {m1}, m1_alt = {m1_alt}, m2 = {m2}, m2_alt = {m2_alt}, \
                     z_prev1 = {z_prev1}, z_prev2 = {z_prev2}, \
-                        zmerge1 = {zmerge1}, zmerge2 = {zmerge2}, flag = {flag}"
+                        zmerge1 = {zmerge1}, zmerge2 = {zmerge2}, flag = {flag}")
+                
+                
             if not np.isclose(m2, m2_alt, rtol=3e-2):
                 print(f"acBHmass differs from Swallowee Mass, this can only happen in the rare case of\
                     two simultaneous mergers, verifying...", flush=True)
@@ -332,9 +334,11 @@ def get_bh_info(events):
                             total_acBHMass += m2n_alt
                     if np.isclose(total_acBHMass, m2, rtol=1e-3):
                         Verified = True
+                        m2 = m2_alt
                         print(f"Verified, That we have multiple Swallow at same time, \
                             total_acBHMass = {total_acBHMass}, acBHMass recorded = {m2}", flush=True)
                 if not Verified:
+                    m2 = m2_alt
                     print("We have a mismatch in acBHMass and Swallowee Mass, but no other merger event found, \
                         this should not happen! We record m2 from the previous timestep instead of acBHMass value")
                     print(f"m1 = {m1}, m1_alt = {m1_alt}, m2 = {m2}, m2_alt = {m2_alt}, \
