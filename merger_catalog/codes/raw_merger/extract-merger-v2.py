@@ -31,17 +31,15 @@ zstart = None
 zend = None
 
 # prepare for the previous chunk
-BHID = None
-redshift = None
+BHID_pr = None
+redshift_pr = None
 
-BHpos = None
-BHvel = None
-BHMass = None
-BHMdot = None
-
+BHpos_pr = None
+BHvel_pr = None
+BHMass_pr = None
+BHMdot_pr = None
 
 cur_chunk_i = 0
-
 
 
 
@@ -83,27 +81,28 @@ def load_bh_data(filename):
 
 
 def get_previous_chunk(snap):
-    global BHID, redshift, \
-        BHpos, BHvel, BHMass, BHMdot
+    global BHID_pr, redshift_pr, \
+        BHpos_pr, BHvel_pr, BHMass_pr, BHMdot_pr
 
     fidx_to_path, snap_to_fidx = get_all_details_file()
     curr_idx = snap_to_fidx[int(snap)]
     prev_path = fidx_to_path[curr_idx - 1]
     bf_prev = BigFile(prev_path)
 
+    print(f"Reading previous chunk {prev_path}", flush=True)
+
     # load data
-    BHID = bf_prev.open('BHID')[:]
-    redshift = bf_prev.open('z')[:]
+    BHID_pr = bf_prev.open('BHID')[:]
+    redshift_pr = bf_prev.open('z')[:]
     # sort by ID then redshift (high to low)
-    sort_indices = np.lexsort((-redshift, BHID))
-    BHID = BHID[sort_indices]
-    redshift = redshift[sort_indices]
+    sort_indices = np.lexsort((-redshift_pr, BHID_pr))
+    BHID_pr = BHID_pr[sort_indices]
+    redshift_pr = redshift_pr[sort_indices]
 
-    BHpos = bf_prev.open('BHpos')[:][sort_indices]
-    BHvel = bf_prev.open('BHvel')[:][sort_indices]
-    BHMass = bf_prev.open('BHMass')[:][sort_indices]
-    BHMdot = bf_prev.open('Mdot')[:][sort_indices]
-
+    BHpos_pr = bf_prev.open('BHpos')[:][sort_indices]
+    BHvel_pr = bf_prev.open('BHvel')[:][sort_indices]
+    BHMass_pr = bf_prev.open('BHMass')[:][sort_indices]
+    BHMdot_pr = bf_prev.open('Mdot')[:][sort_indices]
 
 
 
@@ -187,8 +186,6 @@ def get_index_data():
                 flag = 1
                 data.append((id_1, id_2, idx1, idx2, flag))
 
-
-
         elif len(swallowed_idx) == 1:
             # case2: the easy case, only one BH2 is swallowed and correctly recorded
             id_2 = ID2_sw[swallowed_idx[0]]
@@ -251,116 +248,63 @@ def get_bh_info(events):
         id1_1 = BHID_ds[idx1 - 1]
         id2_1 = BHID_ds[idx2 - 1]
 
-        #-------------------------------------------------------------------------------------------
+        #-----------------------------------------------------------------------------------
         if id1_1 != id1 or id2_1 != id2:
-            print("swallow happened at the very beginning of the chunk, need to load previous chunk", flush=True)
-            if BHID is None:
+            print("swallow happened at the very beginning of the chunk,", flush=True)
+            print(f"ID1 = {id1}, ID1_1 = {id1_1}, ID2 = {id2}, ID2_1 = {id2_1}", flush=True)
+            print(f"zmerge = {zmerge}, zstart = {zstart}", flush=True)
+            if BHID_pr is None:
                 get_previous_chunk(snap)
-            mask1 = (BHID == id1)
-            mask2 = (BHID == id2)
-            idx1_1 = np.where(mask1)[0][-1]
-            idx2_1 = np.where(mask2)[0][-1]
-            while redshift[idx1_1] <= redshift_ds[idx1]:
-                idx1_1 -= 1
-            while redshift[idx2_1] <= redshift_ds[idx2]:
-                idx2_1 -= 1
-            m1_alt = BHMass[idx1_1]
-            m2_alt = BHMass[idx2_1]
-            z_prev1 = redshift[idx1_1]
-            z_prev2 = redshift[idx2_1]
-            zmerge1 = redshift_ds[idx1]
-            zmerge2 = redshift_ds[idx2]
-            assert np.isclose(m1, m1_alt, rtol=3e-2), \
-                f"Swallower mass info from before/after merger differs, this should not happen! \
-                m1 = {m1}, m1_alt = {m1_alt}, m2 = {m2}, m2_alt = {m2_alt}, \
-                    z_prev1 = {z_prev1}, z_prev2 = {z_prev2}, \
-                        zmerge1 = {zmerge1}, zmerge2 = {zmerge2}, flag = {flag}"
-            if not np.isclose(m2, m2_alt, rtol=3e-2):
-                print(f"A very very rare case of a simultaneous swallow also at the first timestep...I don't have energy to treat this propoerly\
-                    let's just record the previous timestep info from the previous chunk", flush=True)
-                m2 = m2_alt
-            # convention is m1 > m2
-            if m1 < m2:
-                m1, m2 = m2, m1
-                id1, id2 = id2, id1
-                idx1, idx2 = idx2, idx1
-            # get mdot info
-            mdot1 = BHMdot[idx1_1] * mdot_msun_yr # to Msun/yr
-            mdot2 = BHMdot[idx2_1] * mdot_msun_yr # to Msun/yr
-            pos1 = BHpos[idx1_1] # in ckpc/h
-            pos2 = BHpos[idx2_1] # in ckpc/h
-            vel1 = BHvel[idx1_1] * (1 + zmerge) # to km/s
-            vel2 = BHvel[idx2_1] * (1 + zmerge) # to km/s
 
-            merger_data.append((zmerge, id1, id2, m1 * 1e10 / hh, m2 * 1e10 / hh, \
-                mdot1, mdot2, pos1, pos2, vel1, vel2))
-            
-        #----------------------------------------------------------------------------------------------
+            idx1_1 = (BHID_pr == id1).nonzero()[0][-1]
+            idx2_1 = (BHID_pr == id2).nonzero()[0][-1]
+            # pointer to the previous chunk
+            BHID, redshift, BHpos, BHvel, BHMass, BHMdot \
+            = BHID_pr, redshift_pr, BHpos_pr, BHvel_pr, BHMass_pr, BHMdot_pr
         else:
-            # validate mass info
-            idx1_1 = idx1
-            while redshift_ds[idx1_1] <= redshift_ds[idx1]:
-                idx1_1 -= 1
-            idx2_1 = idx2
-            while redshift_ds[idx2_1] <= redshift_ds[idx2]:
-                idx2_1 -= 1
-            m1_alt = BHMass_ds[idx1_1]
-            m2_alt = BHMass_ds[idx2_1]
-            z_prev1 = redshift_ds[idx1_1]
-            z_prev2 = redshift_ds[idx2_1]
+            idx1_1 = idx1 - 1
+            idx2_1 = idx2 - 1
+            # pointer to the current chunk
+            BHID, redshift, BHpos, BHvel, BHMass, BHMdot \
+            = BHID_ds, redshift_ds, BHpos_ds, BHvel_ds, BHMass_ds, BHMdot_ds
+        #------------------------------------------------------------------------------------  
 
-            zmerge1 = redshift_ds[idx1]
-            zmerge2 = redshift_ds[idx2]
+        while redshift[idx1_1] <= zmerge:
+            idx1_1 -= 1
+        while redshift[idx2_1] <= zmerge:
+            idx2_1 -= 1
+        m1_alt = BHMass[idx1_1]
+        m2_alt = BHMass[idx2_1]
+        z_prev1 = redshift[idx1_1]
+        z_prev2 = redshift[idx2_1]
+        zmerge1 = redshift_ds[idx1]
+        zmerge2 = redshift_ds[idx2]
+        if not np.isclose(m1, m1_alt, rtol=3e-2), \
+            print(f"Swallower mass info from before/after merger differs, this should not happen! \
+            m1 = {m1}, m1_alt = {m1_alt}, m2 = {m2}, m2_alt = {m2_alt}, \
+                z_prev1 = {z_prev1}, z_prev2 = {z_prev2}, \
+                    zmerge1 = {zmerge1}, zmerge2 = {zmerge2}, flag = {flag}")
+        if not np.isclose(m2, m2_alt, rtol=3e-2):
+            print(f"A case of a simultaneous swallow,\
+                let's just record the previous timestep info from the previous chunk", flush=True)
+            m2 = m2_alt
+        # convention is m1 > m2
+        if m1 < m2:
+            m1, m2 = m2, m1
+            id1, id2 = id2, id1
+            idx1, idx2 = idx2, idx1
+        # get mdot info
+        mdot1 = BHMdot[idx1_1] * mdot_msun_yr # to Msun/yr
+        mdot2 = BHMdot[idx2_1] * mdot_msun_yr # to Msun/yr
+        pos1 = BHpos[idx1_1] # in ckpc/h
+        pos2 = BHpos[idx2_1] # in ckpc/h
+        vel1 = BHvel[idx1_1] * (1 + zmerge) # to km/s
+        vel2 = BHvel[idx2_1] * (1 + zmerge) # to km/s
 
-            if not np.isclose(m1, m1_alt, rtol=3e-2):
-                print(f"Swallower mass info from before/after merger differs, this should not happen! \
-                m1 = {m1}, m1_alt = {m1_alt}, m2 = {m2}, m2_alt = {m2_alt}, \
-                    z_prev1 = {z_prev1}, z_prev2 = {z_prev2}, \
-                        zmerge1 = {zmerge1}, zmerge2 = {zmerge2}, flag = {flag}")
-                
-                
-            if not np.isclose(m2, m2_alt, rtol=3e-2):
-                print(f"acBHmass differs from Swallowee Mass, this can only happen in the rare case of\
-                    two simultaneous mergers, verifying...", flush=True)
-                # find the other merger event
-                other_merger = events[np.where((events['ID1'] == id1) & (events['ID2'] != id2))]
-                Verified = False
-                if len(other_merger) > 0:
-                    total_acBHMass = m2_alt
-                    for (id1n, id2n, idx1n, idx2n, flagn) in other_merger:
-                        zother = redshift_ds[idx1n]
-                        if np.isclose(zother, zmerge1, rtol=1e-3):
-                            m2n_alt = BHMass_ds[idx2n - 1]
-                            total_acBHMass += m2n_alt
-                    if np.isclose(total_acBHMass, m2, rtol=1e-3):
-                        Verified = True
-                        m2 = m2_alt
-                        print(f"Verified, That we have multiple Swallow at same time, \
-                            total_acBHMass = {total_acBHMass}, acBHMass recorded = {m2}", flush=True)
-                if not Verified:
-                    m2 = m2_alt
-                    print("We have a mismatch in acBHMass and Swallowee Mass, but no other merger event found, \
-                        this should not happen! We record m2 from the previous timestep instead of acBHMass value")
-                    print(f"m1 = {m1}, m1_alt = {m1_alt}, m2 = {m2}, m2_alt = {m2_alt}, \
-                    z_prev1 = {z_prev1}, z_prev2 = {z_prev2}, \
-                        zmerge1 = {zmerge1}, zmerge2 = {zmerge2}, flag = {flag}")
-                    continue
-            # convention is m1 > m2
-            if m1 < m2:
-                m1, m2 = m2, m1
-                id1, id2 = id2, id1
-                idx1, idx2 = idx2, idx1
-            # get mdot info
-            mdot1 = BHMdot_ds[idx1_1] * mdot_msun_yr # to Msun/yr
-            mdot2 = BHMdot_ds[idx2_1] * mdot_msun_yr # to Msun/yr
-            pos1 = BHpos_ds[idx1_1] # in ckpc/h
-            pos2 = BHpos_ds[idx2_1] # in ckpc/h
-            vel1 = BHvel_ds[idx1_1] * (1 + zmerge) # to km/s
-            vel2 = BHvel_ds[idx2_1] * (1 + zmerge) # to km/s
-
-            merger_data.append((zmerge, id1, id2, m1 * 1e10 / hh, m2 * 1e10 / hh, \
-                mdot1, mdot2, pos1, pos2, vel1, vel2))
-
+        merger_data.append((zmerge, id1, id2, m1 * 1e10 / hh, m2 * 1e10 / hh, \
+            mdot1, mdot2, pos1, pos2, vel1, vel2))
+            
+    #----------------------------------------------------------------------------------------------
     merger_data = np.array(merger_data, dtype=merger_dtype)
     return merger_data
 
