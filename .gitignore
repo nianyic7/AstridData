@@ -4,8 +4,14 @@
 */slurm*
 */*.out
 */*.slurm
-
-
+*/job*
+*/jobs*
+*/job/*
+*/jobs/*
+*/*.hdf5
+*/*.npy
+*.hdf5 
+*.npy
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
