@@ -94,16 +94,20 @@ def get_previous_chunk(snap):
     # load data
     BHID_pr = bf_prev.open('BHID')[:]
     redshift_pr = bf_prev.open('z')[:]
+    zmin = np.min(redshift_pr[redshift_pr > 0])
+    print(f"Redshift range of the previous chunk: {np.max(redshift_pr)}, {zmin}", flush=True)
+    mask = redshift_pr < zmin + 0.02
+    BHID_pr = BHID_pr[mask]
+    redshift_pr = redshift_pr[mask]
     # sort by ID then redshift (high to low)
     sort_indices = np.lexsort((-redshift_pr, BHID_pr))
     BHID_pr = BHID_pr[sort_indices]
     redshift_pr = redshift_pr[sort_indices]
 
-    BHpos_pr = bf_prev.open('BHpos')[:][sort_indices]
-    BHvel_pr = bf_prev.open('BHvel')[:][sort_indices]
-    BHMass_pr = bf_prev.open('BHMass')[:][sort_indices]
-    BHMdot_pr = bf_prev.open('Mdot')[:][sort_indices]
-
+    BHpos_pr = bf_prev.open('BHpos')[:][mask][sort_indices]
+    BHvel_pr = bf_prev.open('BHvel')[:][mask][sort_indices]
+    BHMass_pr = bf_prev.open('BHMass')[:][mask][sort_indices]
+    BHMdot_pr = bf_prev.open('Mdot')[:][mask][sort_indices]
 
 
 
@@ -121,7 +125,6 @@ def get_acBH_events():
 
     index1_to_ID1 = {acBH_indices[i]: Id1 for i, Id1 in enumerate(Id1s)}
     return index1_to_ID1
-
 
 def get_swallowed_events():
     """_summary_
@@ -148,10 +151,10 @@ def get_swallowed_events():
     return ID2_to_index2, ID2_to_ID1
 
 
-
 def get_index_data():
     index1_to_ID1 = get_acBH_events() # indices of BH1 at merger
-    ID2_to_index2, ID2_to_ID1 = get_swallowed_events() # indices of BH2 at merger, note: this may be a subset of ID1_to_index1
+    # indices of BH2 at merger, note: this may be a subset of ID1_to_index1
+    ID2_to_index2, ID2_to_ID1 = get_swallowed_events() 
 
     idx1_ac = np.array(list(index1_to_ID1.keys()))
     ID1_sw = np.array(list(ID2_to_ID1.values()))
@@ -233,9 +236,22 @@ def get_index_data():
     data = np.array(data, dtype=dt)
     return data
 
+    
+
 
 
 def get_bh_info(events):
+    """Given all event index, get the corresponding BH1 and BH2 info
+
+    Args:
+        events (np.array):
+            [('ID1', 'q'), ('ID2', 'q'), ('idx1', 'i'), ('idx2', 'i'), ('flag', 'i')]
+
+    Returns:
+        merger data:
+        [('z', 'd'), ('ID1', 'q'), ('ID2', 'q'), ('m1', 'd'), ('m2', 'd'), ('mdot1', 'd'), \
+            ('mdot2', 'd'), ('pos1', '3d'), ('pos2', '3d'), ('v1', '3d'), ('v2', '3d')])
+    """
     # initialize empty np array for merger_data
     merger_dtype = np.dtype(
         [('z', 'd'), ('ID1', 'q'), ('ID2', 'q'), ('m1', 'd'), ('m2', 'd'), ('mdot1', 'd'), \
@@ -256,8 +272,17 @@ def get_bh_info(events):
             if BHID_pr is None:
                 get_previous_chunk(snap)
 
-            idx1_1 = (BHID_pr == id1).nonzero()[0][-1]
-            idx2_1 = (BHID_pr == id2).nonzero()[0][-1]
+            mask1 = (BHID_pr == id1).nonzero()[0]
+            mask2 = (BHID_pr == id2).nonzero()[0]
+            if len(mask1) == 0:
+                print(f"ID1 = {id1} not found in the previous chunk, discard this event", flush=True)
+                continue
+            if len(mask2) == 0:
+                print(f"ID2 = {id2} not found in the previous chunk, discard this event", flush=True)
+                continue
+
+            idx1_1 = mask1[-1]
+            idx2_1 = mask2[-1]
             # pointer to the previous chunk
             BHID, redshift, BHpos, BHvel, BHMass, BHMdot \
             = BHID_pr, redshift_pr, BHpos_pr, BHvel_pr, BHMass_pr, BHMdot_pr
@@ -279,14 +304,14 @@ def get_bh_info(events):
         z_prev2 = redshift[idx2_1]
         zmerge1 = redshift_ds[idx1]
         zmerge2 = redshift_ds[idx2]
-        if not np.isclose(m1, m1_alt, rtol=3e-2), \
-            print(f"Swallower mass info from before/after merger differs, this should not happen! \
+        if not np.isclose(m1, m1_alt, rtol=3e-2):
+            print(f"Swallower mass info from before/after merger differs, record the current timestep m1 \
             m1 = {m1}, m1_alt = {m1_alt}, m2 = {m2}, m2_alt = {m2_alt}, \
                 z_prev1 = {z_prev1}, z_prev2 = {z_prev2}, \
                     zmerge1 = {zmerge1}, zmerge2 = {zmerge2}, flag = {flag}")
         if not np.isclose(m2, m2_alt, rtol=3e-2):
             print(f"A case of a simultaneous swallow,\
-                let's just record the previous timestep info from the previous chunk", flush=True)
+                let's just record the previous timestep m2", flush=True)
             m2 = m2_alt
         # convention is m1 > m2
         if m1 < m2:
@@ -413,6 +438,12 @@ def set_path():
     return bh_reduce_file, output_data_file
 
 
+def clean_memory():
+    global swallowed_ds, swallowID_ds
+    swallowed_ds = None
+    swallowID_ds = None
+
+
 def get_all_details_file():
     if cluster == "vera":
         root = "/hildafs/datasets/Asterix"
@@ -430,6 +461,7 @@ def main():
     bh_reduce_file, output_data_file = set_path()
     load_bh_data(bh_reduce_file)
     events = get_index_data()
+    clean_memory()
     merger_data = get_bh_info(events)
 
     if merger_data is not None:
