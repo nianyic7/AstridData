@@ -85,7 +85,7 @@ def get_previous_chunk(snap):
         BHpos_pr, BHvel_pr, BHMass_pr, BHMdot_pr
 
     fidx_to_path, snap_to_fidx = get_all_details_file()
-    curr_idx = snap_to_fidx[int(snap)]
+    curr_idx = snap_to_fidx[snap]
     prev_path = fidx_to_path[curr_idx - 1]
     bf_prev = BigFile(prev_path)
 
@@ -270,7 +270,13 @@ def get_bh_info(events):
             print(f"ID1 = {id1}, ID1_1 = {id1_1}, ID2 = {id2}, ID2_1 = {id2_1}", flush=True)
             print(f"zmerge = {zmerge}, zstart = {zstart}", flush=True)
             if BHID_pr is None:
-                get_previous_chunk(snap)
+                try:
+                    get_previous_chunk(snap)
+                except:
+                    print("No previous chunk, discard this event", flush=True)
+                    continue
+
+                # get_previous_chunk(snap)
 
             mask1 = (BHID_pr == id1).nonzero()[0]
             mask2 = (BHID_pr == id2).nonzero()[0]
@@ -433,6 +439,10 @@ def set_path():
     elif cluster == "frontera":
         bh_reduce_file = f"/scratch3/06431/yueyingn/BH-detail-reduce/BH-Details-R{snap}"
         output_data_file = f"mergers_below2/bh-merger-extended-R{snap}"
+    elif cluster == "bridges":
+        root = "/jet/home/nianyic/scratch1/Astrid/bhdetails-chopped"
+        bh_reduce_file = f"{root}/BH-Details-R{snap}"
+        output_data_file = f"{root}/mergers/bh-merger-extended-R{snap}"
     else:
         sys.exit("unknown cluster name. Please provide either vera or frontera.")
     return bh_reduce_file, output_data_file
@@ -454,7 +464,12 @@ def get_all_details_file():
         flist.remove(f"{root}/BH_details_bigfile/BH-Details-R087")
         fidx_to_path = {i: f for i, f in enumerate(flist)}
         snap_to_fidx = {int(f.split("-R")[-1]): i for i, f in enumerate(flist)}
-        return fidx_to_path, snap_to_fidx
+    elif cluster == "bridges":
+        root = "/jet/home/nianyic/scratch1/Astrid/bhdetails-chopped"
+        flist = sorted(glob.glob(f"{root}/BH-Details-R*"))
+        fidx_to_path = {i: f for i, f in enumerate(flist)}
+        snap_to_fidx = {f.split("-R")[-1]: i for i, f in enumerate(flist)}
+    return fidx_to_path, snap_to_fidx
 
 
 def main():
