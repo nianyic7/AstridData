@@ -74,13 +74,14 @@ def io_binary_file(ifile, ofile):
         offset = istart * nsingle
         # search for restart point
         for newoff in range(offset + 4, offset + nsingle):
-            num = np.fromfile(ifile, dtype='i', count=1, offset=newoff)
-            if num == nsingle - 8:
+            size1 = np.fromfile(file, dtype='i', count=1, offset=newoff)
+            size2 = np.fromfile(file, dtype='i', count=1, offset=newoff+nsingle-4)
+            if (size1 == nsingle - 8) & (size2 == nsingle - 8):
                 print(f"resetting offset from {offset} to {newoff}")
                 break
         next_data = np.fromfile(ifile, dtype=dt, count=1, offset=newoff)
-        assert next_data["size"] == nsingle - 8
-        assert next_data["size2"] == nsingle - 8
+        assert next_data["size"] == nsingle - 8, f"mismatch of size1 in file {ifile}, {next_data}"
+        assert next_data["size2"] == nsingle - 8, f"mismatch of size2 in file {ifile}, {next_data}"
         results = np.fromfile(ifile, dtype=dt, count=-1, offset=newoff)
     
     results.tofile(ofile)
