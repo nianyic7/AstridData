@@ -37,16 +37,6 @@ def load_astrid_cosmo():
 
     return cosmo
 
-cosmo = load_astrid_cosmo()
-
-
-
-def combine_chopped_mergers(snap):
-    pass
-
-
-def combine_all_mergers():
-    pass
 
 
 
@@ -90,6 +80,7 @@ if __name__ == "__main__":
     parser.add_argument('--smin',required=True, type=int,help='min snapshot number')
     parser.add_argument('--smax',required=True, type=int,help='max snapshot number')
     parser.add_argument('--outdir',required=True,type=str,help='path of the output file directory')
+    parser.add_argument('--plot',required=True,type=int,help='whether to save a merger rate plot')
     args = parser.parse_args()
     
     #--------------------------
@@ -98,23 +89,48 @@ if __name__ == "__main__":
     smin = int(args.smin)
     smax = int(args.smax)
     outdir = args.outdir
+    plot = bool(args.plot)
+    
+    # gather chopped mergers by snap
+    mgroups = {}
+    for ff in sorted(glob.glob(mdir + "/*")):
+        snap = int(ff.split("-")[-2][1:])
+        if (snap > smax) | (snap < smin):
+            continue
+        merger = np.load(ff)
+        if snap in mgroups:
+            mgroups[snap].append(merger)
+        else:
+            mgroups[snap] = [merger]
     
     
+    all_mergers = []
+    # write combined merger file
+    for snap in mgroups.keys():
+        merger = np.concatenate(mgroups[snap])
+        all_mergers.append(merger)
+        print(f"snap %03d has a total of %d mergers"%(snap, len(merger)))
+        ofile = outdir + "/bh-merger-extended-R%03d.npy"%snap
+        print(f"saved to %s"%ofile)
+        np.save(ofile, merger)
+    
+    
+    
+    if plot:
+        mergers = np.concatenate(all_mergers)
+        swid = np.minimum(mergers["ID1"], mergers["ID2"])
+        _, uidx = np.unique(swid, return_index=True)
+        mergers = mergers[uidx]
+        print(f"Unique mergers {len(mergers)}")
+        cosmo = load_astrid_cosmo()
+        lbox = 250.
+        zmin = min(mergers["z"])
+        zmax = max(mergers["z"])
+        zc1, rate1 = get_mrate(zmerge=mergers["z"], lbox=lbox, cosmo=cosmo, \
+                  zmin=zmin, zmax=zmax, nbin=20, save='mrate_%03d_%03d.png'%(smin, smax))
 
 
-mdir = "/jet/home/nianyic/scratch1/Astrid/bhdetails-chopped/mergers"
-mergers = []
-for ff in sorted(glob.glob(mdir + "/*")):
-    mergers.append(np.load(ff))
-mergers = np.concatenate(mergers)
-print(len(mergers))
-
-swid = np.minimum(mergers["ID1"], mergers["ID2"])
-_, uidx = np.unique(swid, return_index=True)
-
-mergers = mergers[uidx]
-print(f"Unique mergers {len(mergers)}")
-
+    print("done!")
 
 
 
