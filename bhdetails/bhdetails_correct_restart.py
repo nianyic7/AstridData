@@ -74,8 +74,8 @@ def io_binary_file(ifile, ofile):
         offset = istart * nsingle
         # search for restart point
         for newoff in range(offset + 4, offset + nsingle):
-            size1 = np.fromfile(file, dtype='i', count=1, offset=newoff)
-            size2 = np.fromfile(file, dtype='i', count=1, offset=newoff+nsingle-4)
+            size1 = np.fromfile(ifile, dtype='i', count=1, offset=newoff)
+            size2 = np.fromfile(ifile, dtype='i', count=1, offset=newoff+nsingle-4)
             if (size1 == nsingle - 8) & (size2 == nsingle - 8):
                 print(f"resetting offset from {offset} to {newoff}")
                 break
