@@ -11,7 +11,9 @@ from utils import *
 if __name__ == "__main__":
     # ------------------- Arguments ------------------------------------
     parser = argparse.ArgumentParser(description="save-astrid-pair-cat")
+
     parser.add_argument("--snap", required=True, type=int, help="index of the PIG file")
+    parser.add_argument("--cluster", required=True, type=str, help="cluster name")
     parser.add_argument("--odir", required=True, type=str, help="output directory")
     parser.add_argument(
         "--rmax", required=True, type=float, help="maximum separation for pair in kpc"
@@ -37,8 +39,18 @@ if __name__ == "__main__":
     odir = args.odir
     DEBUG = True
     # ------------------ Read in BHs -----------------------------------
+    if args.cluster == "vera":
+        if snap <= 294:
+            datadir = "/hildafs/datasets/Asterix/PIG_files"
+        else:
+            datadir = "/hildafs/datasets/Asterix/PIG2"
+
+    elif args.cluster == "frontera":
+        datadir = "/scratch3/06431/yueyingn/ASTRID-II/output"
+
+
     metadata = set_metadata_astrid()
-    singles = load_singles_astrid(snap, Mmin, Lmin)
+    singles = load_singles_astrid(datadir, snap, Mmin, Lmin)
     pairs = find_pairs_astrid(singles, rmax)
     write_hdf5(f"{odir}/MBHpairs_{snap}.hdf5", metadata, singles, pairs, DEBUG=DEBUG)
     print(f"Done with snap {snap}!", flush=True)

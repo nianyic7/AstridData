@@ -8,6 +8,39 @@ from utils import *
 
 hh = 0.6774
 
+
+
+KeepCols = set(["ElectronAbundance", "Metallicity", "Metals", "BlackholeSwallowTime"])
+
+def recover(col, odata):
+    """
+    Recover compressed data into original datatypes and values
+
+    Args:
+        col (str): data column name, e.g. "Position"
+        odata (np.ndarray): array to be recovered
+
+    Returns:
+        np.ndarray: array recovered from compressed data
+    """
+    if odata.dtype in IntTypes:
+        return odata
+    elif col == "Position":
+        rdata = odata.astype(np.dtype("float64"))
+        return rdata
+    elif col in KeepCols:
+        return odata
+    else:
+        rdata = odata.astype(np.dtype("float32"))
+        mask = rdata > 0
+        rdata[mask] = np.power(rdata[mask], 10)
+        mask = rdata < 0
+        rdata[mask] = -np.power(rdata[mask], 10)
+
+    return rdata
+
+
+
 def set_metadata_astrid():
         metadata = {
         # ---- Header data - identifying information for the dataset
@@ -41,7 +74,7 @@ def set_metadata_astrid():
         return metadata
 
 
-def load_singles_astrid(snap, Mmin, Lmin):
+def load_singles_astrid(datadir, snap, Mmin, Lmin):
     """_summary_
 
     Args:
@@ -62,11 +95,8 @@ def load_singles_astrid(snap, Mmin, Lmin):
     """
     print("Loading PIG file: %03d" % snap, flush=True)
 
-    if snap <= 294:
-        pig = BigFile("/hildafs/datasets/Asterix/PIG_files/PIG_%03d" % snap)
-    else:
-        pig = BigFile("/hildafs/datasets/Asterix/PIG2/PIG_%03d" % snap)
 
+    pig = BigFile(datadir + "/PIG_%03d" % snap)
     battr = pig["Header"].attrs
     scale_fac = battr["Time"][0]
     boxsize = battr["BoxSize"][0]
@@ -74,12 +104,22 @@ def load_singles_astrid(snap, Mmin, Lmin):
     hubble = hh = battr["HubbleParam"][0]
     print("z=", redshift)
 
-    bhmass = pig.open("5/BlackholeMass")[:] * 1e10 / hh
-    bhmdot = pig.open("5/BlackholeAccretionRate")[:].astype(np.float64)
-    bhlbol = calc_lbol(bhmdot * mdot_msun_yr)
-    bhpos = pig.open("5/Position")[:]
+    # check if file is compressed:
+    if pig["5/BlackholeMass"].dtype == np.dtype("float16"):
+        print("Compressed file detected, recovering data...", flush=True)
+        bhmass = recover("BlackholeMass", pig["5/BlackholeMass"][:])
+        bhmass *= 1e10 / hh
+        bhmdot = recover("BlackholeAccretionRate", pig["5/BlackholeAccretionRate"][:])
+        bhmdot = bhmdot.astype(np.float64)
+        bhpos = recover("Position", pig["5/Position"][:])
+    else:
+        bhmass = pig["5/BlackholeMass"][:] * 1e10 / hh
+        bhmdot = pig["5/BlackholeAccretionRate"][:].astype(np.float64)
+        bhpos = pig["5/Position"][:]
+
     bhid = pig["5/ID"][:]
     bhgid = pig["5/GroupID"][:]
+    bhlbol = calc_lbol(bhmdot * mdot_msun_yr)
 
     print(
         "Selecting BH with M > %.1e Msun, Lbol > %.1e erg/s" % (Mmin, Lmin), flush=True
