@@ -9,6 +9,17 @@ from utils import *
 hh = 0.6774
 
 
+IntTypes = set(
+    [
+        np.dtype("uint64"),
+        np.dtype("uint32"),
+        np.dtype("uint8"),
+        np.dtype("int64"),
+        np.dtype("int32"),
+        np.dtype("int8"),
+    ]
+)
+
 
 KeepCols = set(["ElectronAbundance", "Metallicity", "Metals", "BlackholeSwallowTime"])
 
