@@ -107,23 +107,29 @@ def check_splitted_subhalo(c, tab, grp):
 
     found_minid = np.array([find_minid(i) for i in range(Nsubs)])
     trouble_list = (found_minid == 0).nonzero()[0]
-    
+    # pick out the ones we really care about
+    sMass_trouble = sMass[trouble_list]
+    mask_massive = ((sMass_trouble * 1e10 / 0.6774) > minsmass).nonzero()[0]
+    massive_trouble_list = trouble_list[mask_massive]
     
     if len(trouble_list) > 0:
-        #print('Chunk %04d has %d subhalos, %d problematic'%(c, Nsubs, len(trouble_list)), trouble_list, flush=True)
-        print('Chunk %04d has %d subhalos, %d problematic'%(c, Nsubs, len(trouble_list)), flush=True)
-        
+        print('Chunk %04d has %d subhalos, %d problematic, %d has stellar mass > %.1e'%(c, Nsubs, len(trouble_list), len(massive_trouble_list), minsmass), flush=True)
+    
+    
+    if len(massive_trouble_list) > 0:
         #------------ Plot the largest problematic subhalo -------------------------
-        isort = np.argsort(sMass[trouble_list])[::-1]
+        isort = np.argsort(sMass[massive_trouble_list])[::-1]
         
         fig, ax = plt.subplots(1,2, figsize=(9,4.2))
         box = 250000.
         
-        for ii in [0,1]:
-            if ii == 1 and len(isort) == 1:  # only plot one subhalo if there's only one of them is problematic.
-                continue
-                
-            itar = trouble_list[isort[ii]]
+        if len(massive_trouble_list) > 1:
+            iplot = [0, 1]
+        else:
+            iplot = [0]
+            
+        for ii in iplot:
+            itar = massive_trouble_list[isort[ii]]
             cid = cenID[itar]
             beg, end = sOff[itar], sOff[itar] + sLen[itar]
 
@@ -169,8 +175,6 @@ def check_chunk(chunk_idxlist):
 
         if not data_complete:
             continue
-            
-        
         tab = h5py.File(tabfile, 'r')
         grp = h5py.File(grpfile, 'r')
         
@@ -219,6 +223,7 @@ if __name__ == "__main__":
     parser.add_argument('--cstart',default=0,type=int,help='starting chunk')
     parser.add_argument('--cend',default=-1,type=int,help='ending chunk (exclusive)')
     parser.add_argument('--savedir',required=True,type=str,help='path for saving debug info')
+    parser.add_argument('--minsmass',default=0.,type=float,help='minimum stellar mass in Msun to report/plot, default 0')
     args = parser.parse_args()
     
     
@@ -228,6 +233,10 @@ if __name__ == "__main__":
     subroot = args.subroot
     cstart = int(args.cstart)
     savedir = args.savedir
+    minsmass = args.minsmass
+    
+    if minsmass > 0:
+        print("Will only report/plot problematic subhalos with stellar mass > %.1e Msun"%(minsmass), flush=True)
 
     #--------------create the savedir if needed-----------
     comm.barrier()
