@@ -201,7 +201,7 @@ def MBHB_no_delay(metadata):
     m2 = mdata["m2"]
     m1, m2 = np.max([m1, m2], axis=0), np.min([m1, m2], axis=0)
     z = mdata["z"]
-    sepa = mdata["dr"]
+    sepa = mdata["dr"] * 1e3 # in pc unit
 
     # generate fake binary-host galaxy-remnant properties
     mstar = mdata["mstot"]
