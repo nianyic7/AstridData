@@ -68,13 +68,20 @@ def subhalo_offset(tabfile):
 def check_missing_data(tabfile, grpfile):
     if not os.path.isfile(tabfile):
         print('*** %s does not exist!'%tabfile, flush=True)
+        return False
     
     if not os.path.isfile(grpfile):
         print('*** %s does not exist!'%grpfile, flush=True)
+        return False
         
     if "Subhalo" not in h5py.File(tabfile,'r').keys():
         print('*** %s does not have Subhalo!'%tabfile, flush=True)
+        return False
+    
+    return True
         
+
+
         
     
 def check_splitted_subhalo(c, tab, grp):
@@ -103,6 +110,7 @@ def check_splitted_subhalo(c, tab, grp):
     
     
     if len(trouble_list) > 0:
+        #print('Chunk %04d has %d subhalos, %d problematic'%(c, Nsubs, len(trouble_list)), trouble_list, flush=True)
         print('Chunk %04d has %d subhalos, %d problematic'%(c, Nsubs, len(trouble_list)), flush=True)
         
         #------------ Plot the largest problematic subhalo -------------------------
@@ -112,13 +120,19 @@ def check_splitted_subhalo(c, tab, grp):
         box = 250000.
         
         for ii in [0,1]:
+            if ii == 1 and len(isort) == 1:  # only plot one subhalo if there's only one of them is problematic.
+                continue
+                
             itar = trouble_list[isort[ii]]
             cid = cenID[itar]
             beg, end = sOff[itar], sOff[itar] + sLen[itar]
 
             minpos = tab['Subhalo']['SubhaloPos'][itar]
+            group_idx = tab['Subhalo']['SubhaloGroupNr'][itar]
             pos1 = grp['PartType1']['Coordinates'][beg[1] : end[1]] - minpos
             pos4 = grp['PartType4']['Coordinates'][beg[4] : end[4]] - minpos
+
+        
 
             pos1[pos1 > box/2] -= box
             pos1[pos1 < -box/2] += box
@@ -131,27 +145,32 @@ def check_splitted_subhalo(c, tab, grp):
             ax[ii].scatter(pos4[:, 0], pos4[:, 1], label='Star', s=1)
 
             ax[ii].scatter(0, 0, label='MinPos', color='cyan', s=50)
-            ax[ii].set_title('Chunk%d, Sub%d, Mstar %.1e'%(c, itar, mstar))
+            ax[ii].set_title('C%d, G%d, S%d, Mstar %.1e'%(c, group_idx, itar, mstar))
 
-        plt.savefig(savedir + '/trouble_chunk%d_sub%d.png'%(c, itar), bbox_inches='tight')
+        plt.savefig(savedir + '/trouble_chunk%d_sub%d_group%d.png'%(c, itar, group_idx), bbox_inches='tight')
         plt.close(fig)
     
     
     return trouble_list, sMass[trouble_list]*1e10/0.6774
         
-            
-def check_chunk(cstart, cend):
+
+
+def check_chunk(chunk_idxlist):
     # print('Processing chunk:',c,flush=True)
     cprob_list = []
     subid_list = []
     smass_list = []
-    for c in range(cstart, cend):
+    for c in chunk_idxlist:
         subdir  = subroot + '/chunk%d.%d/output/'%(c,maxgroup_list[c])
         tabfile = subdir + tabname
         grpfile = subdir + grpname
 
-        check_missing_data(tabfile, grpfile)
+        data_complete = check_missing_data(tabfile, grpfile)
 
+        if not data_complete:
+            continue
+            
+        
         tab = h5py.File(tabfile, 'r')
         grp = h5py.File(grpfile, 'r')
         
@@ -160,7 +179,8 @@ def check_chunk(cstart, cend):
         cprob_list.append(np.ones_like(subid) * c)
         smass_list.append(smass)
         
-    
+    if len(subid_list) == 0:
+        return None 
      
     subid_list = np.concatenate(subid_list)
     cprob_list = np.concatenate(cprob_list)
@@ -209,6 +229,12 @@ if __name__ == "__main__":
     cstart = int(args.cstart)
     savedir = args.savedir
 
+    #--------------create the savedir if needed-----------
+    comm.barrier()
+    if rank == 0:
+        if not os.path.exists(savedir):
+            os.mkdir(savedir)
+
     #-------------- Split tasks ------------------------------
     comm.barrier()
     chunk_list, maxgroup_list = get_subfind_chunk(subroot)
@@ -219,6 +245,13 @@ if __name__ == "__main__":
         cend = int(args.cend)
     Nchunks = int(cend - cstart)
     
+    chunk_num_perrank = Nchunks//size
+    extra_chunk = Nchunks - (chunk_num_perrank * size)
+    chunk_idxlist = np.arange(chunk_num_perrank) * size + rank + cstart
+    print(f"chunk_num_perrank: {chunk_num_perrank}, extra_chunk {extra_chunk}.", flush=True)
+    if(rank < extra_chunk):
+        chunk_idxlist = np.hstack((chunk_idxlist, [chunk_num_perrank * size + rank + cstart]))
+    
     istart = Nchunks * rank // size
     iend = Nchunks * (rank+1) // size
     
@@ -226,11 +259,48 @@ if __name__ == "__main__":
         print('Total chunks:',Nchunks)
 
     comm.barrier()
-    print('Rank %03d will process chunk %03d to chunk %03d'%(rank,cstart+istart,cstart+iend), flush=True)
+    if(len(chunk_idxlist)>=2):
+        print('Rank %03d will process %03d chunk %03d, %03d ... %03d'%(rank, len(chunk_idxlist), chunk_idxlist[0], chunk_idxlist[1], chunk_idxlist[-1]), flush=True)
+    else:
+        print('Rank %03d will process %03d chunk'%(rank, len(chunk_idxlist)), flush=True)
     comm.barrier()
     
-    chunks = chunk_list[cstart:cend]
-    data = check_chunk(istart + cstart, iend + cstart)
+    data = check_chunk(chunk_idxlist)    
+    data_size = len(data)
+    
+    sendbuf_chunk = data['chunk'].flatten()
+    sendbuf_subidx = data['subidx'].flatten()
+    sendbuf_mstar = data['mstar'].flatten()
+    
+    comm.barrier()
+    
+    datasize_list = np.array(comm.gather(data_size, root=0))
+    
+    
+    if rank == 0:
+        print(f"rank {rank} get the total problematic data. Size: {datasize_list}")    
+        recv_chunk = np.zeros(sum(datasize_list), dtype=np.int32)
+        recv_subidx = np.zeros(sum(datasize_list), dtype=np.int32)
+        recv_mstar = np.zeros(sum(datasize_list), dtype=np.float32)
+    else:
+        recv_chunk = None 
+        recv_subidx = None 
+        recv_mstar = None 
+
+    comm.Gatherv(sendbuf_chunk, (recv_chunk, datasize_list), root=0)
+    comm.Gatherv(sendbuf_subidx, (recv_subidx, datasize_list), root=0)
+    comm.Gatherv(sendbuf_mstar, (recv_mstar, datasize_list), root=0)
+
+    if rank == 0:
+        print(f"rank {rank} get the gather data. Size: {len(recv_chunk)}, {len(recv_subidx)}, {len(recv_mstar)}.")
+        
+        dt = np.dtype([('chunk', np.int32), ('subidx', np.int32), ('mstar', np.float32)])
+        gather_data = np.zeros(len(recv_chunk), dtype=dt)
+        gather_data['chunk'] = recv_chunk
+        gather_data['subidx'] = recv_subidx
+        gather_data['mstar'] = recv_mstar
+        if len(recv_chunk) > 0:
+            np.save(os.path.join(savedir, "trouble_subhalo.npy"), gather_data)
     
             
             
