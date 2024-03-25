@@ -182,15 +182,17 @@ def check_chunk(chunk_idxlist):
         subid_list.append(subid)
         cprob_list.append(np.ones_like(subid) * c)
         smass_list.append(smass)
-        
+    
+    dt = np.dtype([('chunk', np.int32), ('subidx', np.int32), ('mstar', np.float32)])
+    
     if len(subid_list) == 0:
-        return None 
+        return np.zeros(0, dtype=dt)
      
     subid_list = np.concatenate(subid_list)
     cprob_list = np.concatenate(cprob_list)
     smass_list = np.concatenate(smass_list)
     
-    dt = np.dtype([('chunk', np.int32), ('subidx', np.int32), ('mstar', np.float32)])
+    
     data = np.zeros(len(subid_list), dtype=dt)
     
     data['chunk'] = cprob_list
