@@ -157,7 +157,7 @@ def check_splitted_subhalo(c, tab, grp):
         plt.close(fig)
     
     
-    return trouble_list, sMass[trouble_list]*1e10/0.6774
+    return massive_trouble_list, sMass[massive_trouble_list]*1e10/0.6774
         
 
 
@@ -166,6 +166,8 @@ def check_chunk(chunk_idxlist):
     cprob_list = []
     subid_list = []
     smass_list = []
+    
+    rerun_list = []
     for c in chunk_idxlist:
         subdir  = subroot + '/chunk%d.%d/output/'%(c,maxgroup_list[c])
         tabfile = subdir + tabname
@@ -174,6 +176,7 @@ def check_chunk(chunk_idxlist):
         data_complete = check_missing_data(tabfile, grpfile)
 
         if not data_complete:
+            rerun_list.append((c, -1))
             continue
         tab = h5py.File(tabfile, 'r')
         grp = h5py.File(grpfile, 'r')
@@ -182,6 +185,9 @@ def check_chunk(chunk_idxlist):
         subid_list.append(subid)
         cprob_list.append(np.ones_like(subid) * c)
         smass_list.append(smass)
+        
+        if len(subid > 0):
+            rerun_list.append((c, len(subid)))
     
     dt = np.dtype([('chunk', np.int32), ('subidx', np.int32), ('mstar', np.float32)])
     
@@ -192,13 +198,15 @@ def check_chunk(chunk_idxlist):
     cprob_list = np.concatenate(cprob_list)
     smass_list = np.concatenate(smass_list)
     
-    
     data = np.zeros(len(subid_list), dtype=dt)
     
     data['chunk'] = cprob_list
     data['subidx'] = subid_list
     data['mstar'] = smass_list
-    return data
+    
+    rerun = np.array(rerun_list, dtype = np.dtype([('chunk', np.int32), ('ntrouble', np.int32)]))
+    
+    return data,rerun
         
 
 #     for c in troubles.keys():
@@ -238,7 +246,8 @@ if __name__ == "__main__":
     minsmass = args.minsmass
     
     if minsmass > 0:
-        print("Will only report/plot problematic subhalos with stellar mass > %.1e Msun"%(minsmass), flush=True)
+        if rank == 0:
+            print("Will only report/plot problematic subhalos with stellar mass > %.1e Msun"%(minsmass), flush=True)
 
     #--------------create the savedir if needed-----------
     comm.barrier()
@@ -259,7 +268,9 @@ if __name__ == "__main__":
     chunk_num_perrank = Nchunks//size
     extra_chunk = Nchunks - (chunk_num_perrank * size)
     chunk_idxlist = np.arange(chunk_num_perrank) * size + rank + cstart
-    print(f"chunk_num_perrank: {chunk_num_perrank}, extra_chunk {extra_chunk}.", flush=True)
+    
+    if rank == 0:
+        print(f"chunk_num_perrank: {chunk_num_perrank}, extra_chunk {extra_chunk}.", flush=True)
     if(rank < extra_chunk):
         chunk_idxlist = np.hstack((chunk_idxlist, [chunk_num_perrank * size + rank + cstart]))
     
@@ -276,16 +287,21 @@ if __name__ == "__main__":
         print('Rank %03d will process %03d chunk'%(rank, len(chunk_idxlist)), flush=True)
     comm.barrier()
     
-    data = check_chunk(chunk_idxlist)    
+    data, rerunlist = check_chunk(chunk_idxlist)    
     data_size = len(data)
+    rerun_size = len(rerunlist)
     
     sendbuf_chunk = data['chunk'].flatten()
     sendbuf_subidx = data['subidx'].flatten()
     sendbuf_mstar = data['mstar'].flatten()
     
+    sendbuf_rerunC = rerunlist["chunk"].flatten()
+    sendbuf_rerunN = rerunlist["ntrouble"].flatten()
+    
     comm.barrier()
     
     datasize_list = np.array(comm.gather(data_size, root=0))
+    rerunsize_list = np.array(comm.gather(rerun_size, root=0))
     
     
     if rank == 0:
@@ -293,14 +309,20 @@ if __name__ == "__main__":
         recv_chunk = np.zeros(sum(datasize_list), dtype=np.int32)
         recv_subidx = np.zeros(sum(datasize_list), dtype=np.int32)
         recv_mstar = np.zeros(sum(datasize_list), dtype=np.float32)
+        recv_rerunC = np.zeros(sum(rerunsize_list), dtype=np.int32)
+        recv_rerunN = np.zeros(sum(rerunsize_list), dtype=np.int32)
     else:
         recv_chunk = None 
         recv_subidx = None 
         recv_mstar = None 
-
+        recv_rerunC = None
+        recv_rerunN = None
+        
     comm.Gatherv(sendbuf_chunk, (recv_chunk, datasize_list), root=0)
     comm.Gatherv(sendbuf_subidx, (recv_subidx, datasize_list), root=0)
     comm.Gatherv(sendbuf_mstar, (recv_mstar, datasize_list), root=0)
+    comm.Gatherv(sendbuf_rerunC, (recv_rerunC, rerunsize_list), root=0)
+    comm.Gatherv(sendbuf_rerunN, (recv_rerunN, rerunsize_list), root=0)
 
     if rank == 0:
         print(f"rank {rank} get the gather data. Size: {len(recv_chunk)}, {len(recv_subidx)}, {len(recv_mstar)}.")
@@ -312,6 +334,15 @@ if __name__ == "__main__":
         gather_data['mstar'] = recv_mstar
         if len(recv_chunk) > 0:
             np.save(os.path.join(savedir, "trouble_subhalo.npy"), gather_data)
+        
+        
+        dt = np.dtype([('chunk', np.int32), ('ntrouble', np.int32)])
+        rerun_data = np.zeros(len(recv_rerunC), dtype=dt)
+        rerun_data['chunk'] = recv_rerunC
+        rerun_data['ntrouble'] = recv_rerunN
+        
+        if len(rerun_data) > 0:
+            np.savetxt(os.path.join(savedir, "chunks_to_rerun.txt"), rerun_data, fmt='%d')
     
             
             
