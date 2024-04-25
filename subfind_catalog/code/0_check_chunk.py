@@ -341,6 +341,8 @@ if __name__ == "__main__":
         rerun_data['chunk'] = recv_rerunC
         rerun_data['ntrouble'] = recv_rerunN
         
+        rerun_data = np.sort(rerun_data, order="chunk")
+        
         if len(rerun_data) > 0:
             np.savetxt(os.path.join(savedir, "chunks_to_rerun.txt"), rerun_data, fmt='%d')
     
