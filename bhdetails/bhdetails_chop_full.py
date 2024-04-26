@@ -19,7 +19,7 @@ dtype_all = ('i','q','d','d','d','i','i','3d',\
     'd','d','3d','d','d','i','d','i')
 name2type = {name: dtype for name, dtype in zip(name_all, dtype_all)}
 
-SEL_COL=list(name_all)
+SEL_COL=["acBHMass", "BHMass",  "Density", "Encounter",  "KEflag", "Mdyn", "NumDM", "V1sumDM", "acMass", "BHpos", "DFAccel", "Entropy", "KineticFdbkEnergy",  "MgasEnc", "Swallowed", "V2sumDM", "BHID", "BHvel", "DragAccel",  "GravAccel",  "Mdot", "Mtrack", "SwallowID", "z"]
 
 def get_sort_indices(redshift):
     return np.argsort(redshift)[::-1]
