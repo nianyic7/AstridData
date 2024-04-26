@@ -22,73 +22,81 @@ outdir = args.outdir
 
 #--------------------------------------------------------------------------------
     
-features = ['BHID', 'BHMass','acBHMass', 'BHpos', 'BHvel', 'Density', 'DFAccel', 'Fdbk', 'Entropy', 'Mdot', \
-            'Swallowed', 'SwallowID', 'encounter','z']
-dtype = ['q','d','d','3d','3d','d','3d','d','d','d','i','q','i','d']
+name_all = ('size','BHID','BHMass','Mdot','Density','timebin','Encounter','MinPos',\
+        'MinPot','Entropy','GasVel','acMom','acMass','acBHMass',\
+        'Fdbk','SPHID','SwallowID','CountProgs','Swallowed',\
+        'BHpos','srDensity','srParticles','srVel','srDisp',\
+        'DFAccel','DragAccel','GravAccel','BHvel','Mtrack','Mdyn',\
+        'KineticFdbkEnergy','NumDM','V1sumDM','V2sumDM','MgasEnc','KEflag','z','size2')
+dtype_all = ('i','q','d','d','d','i','i','3d',\
+    'd','d','3d','3d','d','d',\
+    'd','q','q','i','i',\
+    '3d','d','d','3d','d',\
+    '3d','3d','3d','3d','d','d',\
+    'd','d','3d','d','d','i','d','i')
+name2type = {name: dtype for name, dtype in zip(name_all, dtype_all)}
+
+features = ["acBHMass", "BHMass",  "Density", "Encounter",  "KEflag", "Mdyn", "NumDM", "V1sumDM", \
+    "acMass", "BHpos", "DFAccel", "Entropy", "KineticFdbkEnergy",  "MgasEnc", "Swallowed", "V2sumDM", "BHID", "BHvel", \
+        "DragAccel",  "GravAccel",  "Mdot", "Mtrack", "SwallowID", "z"]
+dtype = [name2type[f] for f in features]
 
 #----------------------------------------------------------------------------------
 start = time.time()
 t1 = time.time()
 
-details = srcdir + '/BH-Details-R%03d'%idx
-print('Processing: ', details,flush=True)
+flist = sorted(glob.glob(srcdir+'/BH-Details-R%03d*'%idx))
+for details in flist:
+    print('Processing: ', details,flush=True)
+    fname = os.path.basename(details).split('.')[0]
+    bf = BigFile(details)
+    bhids = bf.open('BHID')[:]
+    entry = len(bhids)
+    print('Total data length: %e'%entry)
 
-bf = BigFile(details)
-bhids = bf.open('BHID')[:]
-entry = len(bhids)
-print('Total data length: %e'%entry)
+    all_info = np.zeros(len(bhids),dtype=[(f,dtype[i]) for i,f in enumerate(features)])
 
-all_info = np.zeros(len(bhids),dtype=[(f,dtype[i]) for i,f in enumerate(features)])
+    # read in all data
+    for ff in features:
+        print('Reading:',ff,flush=True)
+        print('time elapsed:',time.time()-t1,flush=True)
+        t1 = time.time()
+        try:
+            size = bf[ff].size
+            half = size//2
+            all_info[ff][:half] = bf[ff][:half]
+            all_info[ff][half:] = bf[ff][half:]
+    #        all_info[ff] = bf.open(ff)[:]
+        except:
+            print('field:'+ff+' does not exist!')
+            continue
 
-# read in all data
-for ff in features:
-    print('Reading:',ff,flush=True)
+    print('Sorting...',flush=True)
+    all_info.sort(order=["BHID", "z"])
     print('time elapsed:',time.time()-t1,flush=True)
     t1 = time.time()
-    try:
-        size = bf[ff].size
-        half = size//2
-        all_info[ff][:half] = bf[ff][:half]
-        all_info[ff][half:] = bf[ff][half:]
-#        all_info[ff] = bf.open(ff)[:]
-    except:
-        print('field:'+ff+' does not exist!')
-        continue
-    
-    
 
-    
-    
+    print('Splitting...',flush=True)
+    all_info = np.split(all_info, np.where(np.diff(all_info['BHID']))[0]+1)
+    print('total BHs:',len(all_info),flush=True)
+    print('time elapsed:',time.time()-t1,flush=True)
 
-print('Sorting...',flush=True)
-all_info.sort(order=["BHID", "z"])
-print('time elapsed:',time.time()-t1,flush=True)
-t1 = time.time()
+    t1 = time.time()
 
-print('Splitting...',flush=True)
-all_info = np.split(all_info, np.where(np.diff(all_info['BHID']))[0]+1)
-print('total BHs:',len(all_info),flush=True)
-print('time elapsed:',time.time()-t1,flush=True)
-t1 = time.time()
+    print('Creating dictionary...',flush=True)
+    all_info = {b['BHID'][0]:b for b in all_info}
+    print('time elapsed:',time.time()-t1,flush=True)
+    t1 = time.time()
 
-# save-by-chunk to save mem
+    # save
+    save = outdir+f'/{fname}.pkl'
+    print('Saving to:', save, flush=True)
 
-
-
-print('Creating dictionary...',flush=True)
-all_info = {b['BHID'][0]:b for b in all_info}
-print('time elapsed:',time.time()-t1,flush=True)
-t1 = time.time()
-
-# save
-save = outdir+'/BlackholeDetails_%03d.pkl'%idx
-print('Saving to:', save, flush=True)
-
-with open(save, 'wb') as f:
-    pickle.dump(all_info,f,pickle.HIGHEST_PROTOCOL)
-    f.close()
-    
-print('Done! Total time elapsed:',time.time() - start)
+    with open(save, 'wb') as f:
+        pickle.dump(all_info,f)
+        f.close()
+        
+    print('Done! Total time elapsed:',time.time() - start)
 
 
 
