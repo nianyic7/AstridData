@@ -7,18 +7,9 @@ from mpi4py import MPI
 from bigfile import FileMPI
 import argparse
 
-# PRIME_COL=['acBHMass', 'BHMass', 'Density', ,  'Mdyn', 'NumDM', 'V1sumDM',
-# 'acMass', 'BHpos', 'Encounter', 'KineticFdbkEnergy','MgasEnc', 'Swallowed', 'V2sumDM',
-# 'BHID', 'BHvel', 'Entropy', 'DFAccel','DragAccel','GravAccel', 'Mdot', 'Mtrack', 'SwallowID',  'z']
-
-# # SECON_COL = ['BHID', 'timebin', 'KEflag', '']
-
-SEL_COL = ['BHID','BHMass','Mdot','Density','timebin','Encounter','MinPos',\
-             'MinPot','Entropy','GasVel','acMom','acMass','acBHMass',\
-             'Fdbk','SPHID','SwallowID','CountProgs','Swallowed',\
-             'BHpos','srDensity','srParticles','srVel','srDisp',\
-             'DFAccel','DragAccel','GravAccel','BHvel','Mtrack','Mdyn',\
-             'KineticFdbkEnergy','NumDM','V1sumDM','V2sumDM','MgasEnc','KEflag','z']
+SEL_COL=['acBHMass', 'BHMass', 'Density', 'KEflag',  'Mdyn', 'NumDM', 'V1sumDM',
+'acMass', 'BHpos', 'Encounter', 'KineticFdbkEnergy','MgasEnc', 'Swallowed', 'V2sumDM',
+'BHID', 'BHvel', 'Entropy', 'DFAccel','DragAccel','GravAccel', 'Mdot', 'Mtrack', 'SwallowID',  'z']
 
 
 class BHType:
