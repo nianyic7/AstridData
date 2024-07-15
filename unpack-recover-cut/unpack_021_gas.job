@@ -1,0 +1,25 @@
+#!/bin/bash
+#SBATCH -p small	
+#SBATCH -N 1
+#SBATCH --ntasks-per-node 1
+#SBATCH --job-name=up-021
+#SBATCH --output=slurm-%x.out
+#SBATCH --time=4:00:00
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=nianyic@andrew.cmu.edu
+hostname; pwd; date
+
+outdir="/home1/08942/nianyic/scratch3/Astrid/PART_temp/PART_021-compressed/0"
+
+for col in "Position.tar" "InternalEnergy.tar"
+do
+echo "unpacking $col"
+srun -n 1 tar -xf $col -C "$outdir"
+done
+
+echo "done with unpack"
+
+date
+
+EOF
+
