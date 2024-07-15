@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --time 3:00:00
+#SBATCH --time 8:00:00
 #SBATCH --job-name d2d-placeholder
 #SBATCH --partition RM
 #SBATCH -o slurm-%x.out
