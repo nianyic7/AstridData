@@ -9,6 +9,15 @@ from mpi4py import MPI
 
 
 def get_subfind_chunk(subroot):
+    """get list of all chunks and the corresponding last FOF group numbers
+
+    Args:
+        subroot (str): dircetory of the subfind output without "/"
+
+    Returns:
+        list: list of chunk numbers
+        list: list of max fof group number (MP-gadget version) written in each chunk
+    """
     subdir = subroot + '/chunk*'
     
     chunk_list    = []
@@ -28,15 +37,33 @@ def get_subfind_chunk(subroot):
 
 
 def group_chunk_dir(groupidx):
+    """get the chunk number that contains the FOF group
+
+    Args:
+        groupidx (int): MP-Gadget FOF group idx
+
+    Returns:
+        int: which chunk this group is in
+    """
     chunk = np.nonzero(maxgroup_list-1>=groupidx)[0][0]
     return chunk
 
 
 def get_GroupSidx(gidx):
+    """_summary_
+
+    Args:
+        gidx (int): MP-Gadget FOF group idx
+
+    Returns:
+        List: list of subgroups to fetch for this group; from "SubgroupID" saved in step 1
+    """
+
     start,end = Offset[gidx], Offset[gidx] + Length[gidx]
     # DO NOT assume that each subgroup has a DM particle!!
-    subID = np.concatenate([dest_r['%d/SubgroupID'%p][start[p]:end[p]] for p in [0,1,4,5]])
 
+    subID = np.concatenate([dest_r['%d/SubgroupID'%p][start[p]:end[p]] for p in [0,1,4,5]])
+    # This is all subhaloIDs (just used for tracking) in this group
     subID_set   = set(subID)
     if len(subID_set) == 0 or min(list(subID_set)) == FUZZ:
         # no substructure in this group
@@ -51,6 +78,16 @@ def get_GroupSidx(gidx):
 
 
 def get_SubgroupOff(GroupOff,SubLen):
+    """_summary_
+
+    Args:
+        GroupOff (int): Group starting point (bigfile)
+        SubLen (array, int): subgroup length for all subhalos in this group
+
+    Returns:
+        array, int: subgroup offset for all subhalos in this group (bigfile)
+    """
+
     if len(SubLen) == 0:
         return np.zeros((0,6),dtype = np.int32)
     SubOff = np.zeros_like(SubLen,dtype=int)
@@ -59,6 +96,15 @@ def get_SubgroupOff(GroupOff,SubLen):
 
 
 def write_subgroups_chunk(ChunkFirstSub,SidxFOF2Chunk,GroupSidxChunk,SubOff,Subhalo):
+    """_summary_
+
+    Args:
+        ChunkFirstSub (int): idx of the first subgroup in this chunk, we start writing here
+        SidxFOF2Chunk (_type_): _description_
+        GroupSidxChunk (_type_): _description_
+        SubOff (_type_): _description_
+        Subhalo (_type_): _description_
+    """
     if len(GroupSidxChunk) == 0:
         return 
     assert len(GroupSidxChunk) == len(SubOff), \
@@ -112,11 +158,17 @@ def process_chunk(c, ChunkFirstSub):
         # nothing to do
         print('No subgroups at all in chunk%d'%c,flush=True)
         return  ChunkFirstSub
-        
-    SidxFOF2Chunk  = np.argsort(SubhaloTotMass)[::-1]
-    GroupSidxList  = [get_GroupSidx(gidx) for gidx in range(gstart,gend)]
-    GroupSidxChunk = np.concatenate(GroupSidxList)
     
+    # this translate from bf-SubgroupID saved as BF in step1 to the subhalo idx in the chunk
+    # need this whenever we need to convert from GroupSidxList (bf-SubgroupID) to Subhalo idx in the chunk
+    SidxFOF2Chunk  = np.argsort(SubhaloTotMass)[::-1]  
+    # this gets the bf-SubgroupID for each group in this chunk
+    # it is per-bf-Group uniqued
+    GroupSidxList  = [get_GroupSidx(gidx) for gidx in range(gstart,gend)]
+    # this should be unique!!! if not, it means that two BF-FOFGroups contain particles in the same subhalo
+    # need a treatment for this case
+    GroupSidxChunk = np.concatenate(GroupSidxList)
+    # this gets the subgroup length for each subgroup in this chunk in bf-order
     SubLenList     = [SubLengthChunk[SidxFOF2Chunk[s]] for s in GroupSidxList]
     NsubsChunk     = np.array([len(s) for s in GroupSidxList])
     NsubsTot       = sum(NsubsChunk)
