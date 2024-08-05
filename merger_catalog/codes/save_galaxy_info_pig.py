@@ -183,6 +183,13 @@ def get_galaxy_info_pre(merger):
     id1, id2 = merger["ID1"], merger["ID2"]
     m1, m2   = merger["m1"], merger["m2"]
     zmerge   = merger["z"]
+    pos1, pos2 = merger["pos1"], merger["pos2"]
+    dpos = pos1 - pos2
+    Lbox = 250000.
+    dpos[dpos > Lbox/2] -= Lbox
+    dpos[dpos <= -Lbox/2] += Lbox
+    dr = np.linalg.norm(dpos)
+    dr = dr / (1 + zmerge) / 0.6774
     try:
         bidx1 = id2idx[id1]
         mseed1, zseed1, m4tot1, mhtot1, sigma1 = galaxy_info(bidx1)
@@ -194,7 +201,7 @@ def get_galaxy_info_pre(merger):
     except KeyError:
         mseed2, zseed2, m4tot2, mhtot2, sigma2 = -1, -1, -1, -1, -1
 
-    return (zmerge, id1, id2, m1, m2, m4tot1, m4tot2, sigma1, sigma2, mseed1, mseed2, zseed1, zseed2, redshift, snap)
+    return (zmerge, id1, id2, dr, m1, m2, m4tot1, m4tot2, sigma1, sigma2, mseed1, mseed2, zseed1, zseed2, redshift, snap)
     
     
     
@@ -203,13 +210,21 @@ def get_galaxy_info_post(merger):
     m1, m2   = merger["m1"], merger["m2"]
     zmerge = merger["z"]
     idr = max(id1, id2)
+    pos1, pos2 = merger["pos1"], merger["pos2"]
+    dpos = pos1 - pos2
+    Lbox = 250000.
+    dpos[dpos > Lbox/2] -= Lbox
+    dpos[dpos <= -Lbox/2] += Lbox
+    dr = np.linalg.norm(dpos)
+    dr = dr / (1 + zmerge) / 0.6774
+
     try:
         bidx1 = id2idx[idr]
         mseed1, zseed1, m4tot1, mhtot1, sigma1, rho1, gamma1 = galaxy_info(bidx1, profile=True)
     except KeyError:
         mseed1, zseed1, m4tot1, mhtot1, sigma1, rho1, gamma1 = -1, -1, -1, -1, -1, -1, -1
         
-    return (zmerge, id1, id2, m1, m2, m4tot1, mhtot1, sigma1, rho1, gamma1, redshift, snap)
+    return (zmerge, id1, id2, dr, m1, m2, m4tot1, mhtot1, sigma1, rho1, gamma1, redshift, snap)
 
 
 if __name__ == "__main__":
@@ -260,9 +275,9 @@ if __name__ == "__main__":
     print('Loaded total number of pre-merger events:', len(mergers_pre), flush=True)
     
 
-    f1 = ["zmerge", "id1", "id2", "m1", "m2", "m4tot1", "m4tot2", \
+    f1 = ["zmerge", "id1", "id2", "dr", "m1", "m2", "m4tot1", "m4tot2", \
           "sigma1", "sigma2", "mseed1", "mseed2", "zseed1", "zseedo2", "zsnap", "snap_num"]
-    d1 = ["d", "q", "q", "d", "d", "d", "d", "d", "d", "d", "d", "d", "d", "d", "i"]
+    d1 = ["d", "q", "q", "d", "d", "d", "d", "d", "d", "d", "d", "d", "d", "d", "d", "i"]
     dtype1 = {'names':f1, 'formats':d1}
     
     savedir = outdir + "before/before-merger-gal-S%03d.npy"%(snap)
@@ -281,8 +296,8 @@ if __name__ == "__main__":
     mergers_post  = select_mergers(mergers, zmax = zprev, zmin = redshift)
     print('Loaded total number of post-merger events:', len(mergers_post), flush=True)
     
-    f2 = ["zmerge", "id1", "id2", "m1", "m2", "m4tot", "mhtot", "sigma", "rho", "gamma", "zsnap", "snap_num"]
-    d2 = ["d", "q", "q", "d", "d", "d", "d", "d", "d", "d", "d", "i"]
+    f2 = ["zmerge", "id1", "id2", "dr", "m1", "m2", "m4tot", "mhtot", "sigma", "rho", "gamma", "zsnap", "snap_num"]
+    d2 = ["d", "q", "q", "d", "d", "d", "d", "d", "d", "d", "d", "d", "i"]
     dtype2 = {'names':f2, 'formats':d2}
     
     #--------------- fetch galaxy info ------------------
