@@ -205,6 +205,9 @@ def process_chunk(c):
             sgpIDs[p][fof_sort[p]] = sgpIDs[p][sub_sort[p]]
             
         for p in [0,1,4,5]:
+            # no this type of particle in this chunk, nothing to write. 
+            if pstart[p] == pend[p]:
+                continue
             # get orders
             new_order, subID_sorted = get_chunk_newidx_sid(p, Length, Offset, sgpIDs, Ngroups)
             # write orders
@@ -216,6 +219,9 @@ def process_chunk(c):
         print('skipping entire chunk:',c,flush=True)
         sgpIDs = None
         for p in [0,1,4,5]:
+            # no this type of particle in this chunk, nothing to write. 
+            if pstart[p] == pend[p]:
+                continue
             # get orders
             new_order, subID_sorted = get_chunk_newidx_sid(p, Length, Offset, sgpIDs, Ngroups, skipchunk=True)
             # write orders
@@ -292,7 +298,7 @@ if __name__ == "__main__":
     comm.barrier()
     chunk_list, maxgroup_list = get_subfind_chunk(subroot)
 
-    if args.cend < cstart:
+    if args.cend <= cstart:
         cend = len(chunk_list)
     else:
         cend = int(args.cend)

@@ -170,28 +170,28 @@ def process_group(pig_r, gidx):
     return order, sobt, slbt, slen, sbhmass, sbhmdot
 
 
-# def init_offblock(pig_r, pig_w, indir):
+def init_offblock(pig_r, pig_w, indir):
     
     
-#     for ff in glob.glob(indir + '/5/*'):
-#         blockname = ff.split('/')[-1]
-#         data_dtype = pig_r['5/%s'%blockname].dtype
-#         data_size = pig_r['5/%s'%blockname].size
-#         data_nfile = pig_r['5/%s'%blockname].Nfile
-#         block = pig_w.create('5/%s_2'%blockname, data_dtype, data_size, data_nfile)
-#         print(f"init the block: 5/{blockname}_2.")
+    for ff in glob.glob(indir + '/5/*'):
+        blockname = ff.split('/')[-1]
+        data_dtype = pig_r['5/%s'%blockname].dtype
+        data_size = pig_r['5/%s'%blockname].size
+        data_nfile = pig_r['5/%s'%blockname].Nfile
+        pig_w.create('5/%s_2'%blockname, data_dtype, data_size, data_nfile)
+        print(f"init the block: 5/{blockname}_2.")
         
 
-#     for blockname in ["SubhaloLenType", "SubhaloLen", "SubhaloOffsetType", "SubhaloBHMass", "SubhaloBHMdot"]:
+    for blockname in ["SubhaloLenType", "SubhaloLen", "SubhaloOffsetType", "SubhaloBHMass", "SubhaloBHMdot"]:
 
-#         data_dtype = pig_r['SubGroups/%s'%blockname].dtype
-#         data_size = pig_r['SubGroups/%s'%blockname].size
-#         data_nfile = pig_r['SubGroups/%s'%blockname].Nfile       
+        data_dtype = pig_r['SubGroups/%s'%blockname].dtype
+        data_size = pig_r['SubGroups/%s'%blockname].size
+        data_nfile = pig_r['SubGroups/%s'%blockname].Nfile       
         
-#         block = pig_w.create('SubGroups/%s_2'%blockname, data_dtype, data_size, data_nfile) 
-#         print(f"init the block: SubGroups/{blockname}_2.")
+        pig_w.create('SubGroups/%s_2'%blockname, data_dtype, data_size, data_nfile) 
+        print(f"init the block: SubGroups/{blockname}_2.")
 
-#     return block
+    return block
 
 def rewrite_group(pig_r, pig_w, gidx):
     order, sobt, slbt, slen, sbhmass, sbhmdot = process_group(pig_r, gidx)
@@ -202,17 +202,17 @@ def rewrite_group(pig_r, pig_w, gidx):
     for ff in glob.glob(indir + '/5/*'):
         blockname = ff.split('/')[-1]
         data = pig_r['5/%s'%blockname][gstart:gend]
-        data = data[order] 
-        pig_w['5/%s'%blockname].write(gstart,data)
+        data = data[order]
+        pig_w['5/%s_2'%blockname].write(gstart,data)
         
     
     print('Rewriting Length and Offset of BHs...', flush=True)
     
-    pig_w['SubGroups/SubhaloLenType'].write(firstsub, slbt)
-    pig_w['SubGroups/SubhaloLen'].write(firstsub, slen)
-    pig_w['SubGroups/SubhaloOffsetType'].write(firstsub, sobt)
-    pig_w['SubGroups/SubhaloBHMass'].write(firstsub, sbhmass)
-    pig_w['SubGroups/SubhaloBHMdot'].write(firstsub, sbhmdot)
+    pig_w['SubGroups/SubhaloLenType_2'].write(firstsub, slbt)
+    pig_w['SubGroups/SubhaloLen_2'].write(firstsub, slen)
+    pig_w['SubGroups/SubhaloOffsetType_2'].write(firstsub, sobt)
+    pig_w['SubGroups/SubhaloBHMass_2'].write(firstsub, sbhmass)
+    pig_w['SubGroups/SubhaloBHMdot_2'].write(firstsub, sbhmdot)
     
     
     print('done with group %d'%(gidx), flush=True)
@@ -303,11 +303,53 @@ if __name__ == "__main__":
     ax[1].set(xlabel=r'$M_{\rm BH}\,[M_\odot]$')
 #----------------------------------------------------------------------------------------
     
+    #init_offblock(pig_r, pig_w, indir)
+    
+    for ff in glob.glob(indir + '/5/*'):
+        blockname = ff.split('/')[-1]
+        data_dtype = pig_r['5/%s'%blockname].dtype
+        data_size = pig_r['5/%s'%blockname].size
+        data_nfile = pig_r['5/%s'%blockname].Nfile
+        block = pig_w.create('5/%s_2'%blockname, data_dtype, data_size, data_nfile)
+        print(f"init the block: 5/{blockname}_2.")
+        
+
+    for blockname in ["SubhaloLenType", "SubhaloLen", "SubhaloOffsetType", "SubhaloBHMass", "SubhaloBHMdot"]:
+
+        data_dtype = pig_r['SubGroups/%s'%blockname].dtype
+        data_size = pig_r['SubGroups/%s'%blockname].size
+        data_nfile = pig_r['SubGroups/%s'%blockname].Nfile       
+        
+        block = pig_w.create('SubGroups/%s_2'%blockname, data_dtype, data_size, data_nfile) 
+        print(f"init the block: SubGroups/{blockname}_2.")    
+    
     
     bhmass_list = []
     smass_list = []
     for gidx in list(groups.keys())[:]:
-        rewrite_group(pig_r, pig_w, gidx)
+        #rewrite_group(pig_r, pig_w, gidx)
+        order, sobt, slbt, slen, sbhmass, sbhmdot = process_group(pig_r, gidx)
+        gstart, gend = Gobt[gidx][5], Gobt[gidx][5] + Glbt[gidx][5] # abs start, end index of BH in this group
+        firstsub = FirstSub[gidx]
+        
+        print('Reordering BHs in group...', flush=True)
+        for ff in glob.glob(indir + '/5/*'):
+            blockname = ff.split('/')[-1]
+            data = pig_r['5/%s'%blockname][gstart:gend]
+            data = data[order]
+            pig_w['5/%s_2'%blockname].write(gstart,data)
+            
+        
+        print('Rewriting Length and Offset of BHs...', flush=True)
+        
+        pig_w['SubGroups/SubhaloLenType_2'].write(firstsub, slbt)
+        pig_w['SubGroups/SubhaloLen_2'].write(firstsub, slen)
+        pig_w['SubGroups/SubhaloOffsetType_2'].write(firstsub, sobt)
+        pig_w['SubGroups/SubhaloBHMass_2'].write(firstsub, sbhmass)
+        pig_w['SubGroups/SubhaloBHMdot_2'].write(firstsub, sbhmdot)
+        
+        
+        print('done with group %d'%(gidx), flush=True)        
 
         
         

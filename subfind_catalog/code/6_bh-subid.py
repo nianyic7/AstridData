@@ -40,10 +40,10 @@ if __name__ == "__main__":
     
     comm.barrier()
     #---------- Initialize  blocks --------------
-    blockname = '5-2/SubgroupIndex'
+    blockname = '5/SubgroupIndex_test'
     dtype = 'i8'
-    dsize = dest_r['5-2/ID'].size
-    nfile = dest_r['5-2/ID'].Nfile
+    dsize = dest_r['5/ID'].size
+    nfile = dest_r['5/ID'].Nfile
     if gstart == 0:
         block5 = dest_w.create(blockname, dtype, dsize, nfile)
     else:
@@ -66,8 +66,8 @@ if __name__ == "__main__":
     gLength  = dest_r['FOFGroups/LengthByType']
     gOffset  = dest_r['FOFGroups/OffsetByType']
     
-    sLength  = dest_r['SubGroups/SubhaloLenType2']
-    sOffset  = dest_r['SubGroups/SubhaloOffsetType2']
+    sLength  = dest_r['SubGroups/SubhaloLenType']
+    sOffset  = dest_r['SubGroups/SubhaloOffsetType']
     
     FirstSub = dest_r['FOFGroups/GroupFirstSub'][:]
     Nsubs    = dest_r['FOFGroups/GroupNsubs']
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         print('Total BHs:', totalBHs, 'Last BH in Subhalo:', lastBHinSub, flush=True)
         
     comm.barrier()
-    print('Rank %d starts from Group %d to Group%d'%(rank,istart,iend),flush=True)
+    print('Rank %d starts from Group %d to Group %d'%(rank,istart,iend),flush=True)
     comm.barrier()
 
     fsubs = FirstSub[istart : iend]
@@ -118,6 +118,7 @@ if __name__ == "__main__":
             if send <= sbeg:
                 continue
             sidx5[sbeg : send] = s
+            print(f"rank {rank} save data {s} from {sbeg} to {send}.")
     
     print('rank %d writing data from %d with length %d'%(rank, start, len(sidx5)), flush=True)
     block5.write(start, sidx5)
