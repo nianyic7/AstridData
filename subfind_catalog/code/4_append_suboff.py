@@ -39,7 +39,7 @@ def get_SubgroupOff(GroupOff,SubLen):
     return (SubOff + GroupOff).astype(np.int64)
 
 def write_subgroup_offset(block,gstart,gend):
-    if gstart < 1000:
+    if gstart < 200:
         for gidx in range(gstart,gend):
             FirstSubs = dest_r['FOFGroups/GroupFirstSub'][gidx]
             Nsubs     =  dest_r['FOFGroups/GroupNsubs'][gidx]

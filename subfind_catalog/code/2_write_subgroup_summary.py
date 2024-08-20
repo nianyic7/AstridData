@@ -101,6 +101,10 @@ def process_chunk(c, ChunkFirstSub):
     print('Processing chunk:',c,flush=True)
     subdir  = subroot + '/chunk%d.%d/output/'%(c,maxgroup_list[c])
     tabfile = subdir + tab
+    
+    if not os.path.exists(tabfile):
+        print(f"In chunk{c} the tab file doesn't exist, skip it.", flush=True)
+        return 
 
     if c == 0:
         gstart, gend = 0, maxgroup_list[c]
@@ -149,6 +153,13 @@ def get_Nsubs(chunks,istart,iend):
     for c in chunks[istart:iend]:
         subdir  = subroot + '/chunk%d.%d/output/'%(c,maxgroup_list[c])
         tabfile = subdir + tab
+        
+        if not os.path.exists(tabfile):
+            print(f"In chunk{c} the tab file doesn't exist, skip it.", flush=True)
+            Nsubs.append(0)
+            continue
+            
+        
         if "Subhalo" in h5py.File(tabfile,'r').keys():
             try:
                 NsubsChunk  = h5py.File(tabfile,'r')['Header'].attrs['Nsubgroups_Total']
@@ -282,13 +293,20 @@ if __name__ == "__main__":
     
     Nchunks = int(cend - cstart)
     
-    Nproc1 = 100 #min(100,size//6)
-    Nproc2 = (size - Nproc1)//4 
-    Nproc3 = size - Nproc2 - Nproc1
     
-    batch1 = 1000
-    batch2 = (Nchunks - batch1)//3 * 2
-    batch3 = Nchunks - batch1 - batch2
+    if Nchunks < size:
+        print(f"Warning: too many ranks {size} for {Nchunks} chunks!", flush=True)
+    
+    Nproc1 = min(100,size//6)
+    Nproc3 = (size - Nproc1)//4 
+    Nproc2 = size - Nproc3 - Nproc1
+    
+
+    
+    batch1 = max(200, Nchunks//3, Nproc1)
+    batch3 = max((Nchunks - batch1)//3 * 2, Nproc3)
+    batch2 = Nchunks - batch1 - batch3
+
     
     # if rank <  Nproc1:
     #     istart = batch1 * rank // Nproc1

@@ -186,6 +186,12 @@ def process_chunk(c):
     Offset  = pig['FOFGroups/OffsetByType'][gstart:gend]
     Ngroups = len(Length)
     
+    
+    # skip the bug halo 
+    if np.sum(Length, axis=0)[1] < 5:
+        print(f"chunk {c} has less than 5 DM part, probably a problematic halo. Skip it!", flush=True)
+        return  
+    
     # starting and ending particle index of this chunk in FOFGroups
     pstart, pend = Offset[0], Offset[-1] + Length[-1]
     

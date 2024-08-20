@@ -17,13 +17,15 @@ def rewrite_group(igroup,blockname,p):
 
 
 
-def init_blocks(source,dest,blocknames):
+def init_blocks(source,dest,blocknames,dest_filename):
     pig = BigFile(source)
     blocklists = {p:[] for p in [0,1,4,5]}
     for blockname in blocknames:
         p = int(blockname.split('/')[0])
         dtype,dsize,nfile = dtype_size_nfile(pig,blockname)
-        if gstart == 0:
+        
+        if not os.path.exists(os.path.join(dest_filename, blockname)):
+            #if gstart == 0:
             block = dest.create(blockname, dtype, dsize, nfile)
         else:
             block = dest[blockname]
@@ -71,7 +73,8 @@ if __name__ == "__main__":
     
     comm.barrier()
     #---------- Initialize all blocks --------------
-    blocklists = init_blocks(source=args.pigfile, dest=dest_w, blocknames=blocknames)
+    blocklists = init_blocks(source=args.pigfile, dest=dest_w, 
+                             blocknames=blocknames, dest_filename=args.dest)
     comm.barrier()
         
     Length  = pig['FOFGroups/LengthByType']
@@ -106,9 +109,9 @@ if __name__ == "__main__":
     Nproc2 = max(1,size//3)
     Nproc1 = size - Nproc2 - Nproc3
     
-    batch1 = max(1000, Ngroups//20)
-    batch2 = (Ngroups - batch1)//3
-    batch3 = Ngroups - batch1 - batch2
+    batch1 = min(max(1000, Ngroups//20), Ngroups)
+    batch2 = max((Ngroups - batch1)//3, 0)
+    batch3 = max(Ngroups - batch1 - batch2, 0)
 
     exit_flag = 0
     comm.barrier()
