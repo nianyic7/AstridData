@@ -39,7 +39,7 @@ def get_SubgroupOff(GroupOff,SubLen):
     return (SubOff + GroupOff).astype(np.int64)
 
 def write_subgroup_offset(block,gstart,gend):
-    if gstart < 1000:
+    if gstart < 200:
         for gidx in range(gstart,gend):
             FirstSubs = dest_r['FOFGroups/GroupFirstSub'][gidx]
             Nsubs     =  dest_r['FOFGroups/GroupNsubs'][gidx]
@@ -53,6 +53,9 @@ def write_subgroup_offset(block,gstart,gend):
         FirstSubs = dest_r['FOFGroups/GroupFirstSub'][gstart:gend]
         mask = FirstSubs > 0
         FirstSubs = FirstSubs[mask]
+        if len(FirstSubs) == 0:
+            print(f"no subhalo in the group ({gstart} to {gend})!")
+            return
         Nsubs     =  dest_r['FOFGroups/GroupNsubs'][gstart:gend][mask]
         GroupOff  = dest_r['FOFGroups/OffsetByType'][gstart:gend][mask]
     
@@ -70,7 +73,7 @@ def write_subgroup_offset(block,gstart,gend):
 
         SubOff = np.concatenate(SubOff, axis=0)
         block.write(sstart,SubOff)
-        # print('group %d done!'%(gend-1))
+        #print('group %d done!'%(gend-1))
 
 def init_offblock():
     dtype  = ('<i8', (6,))

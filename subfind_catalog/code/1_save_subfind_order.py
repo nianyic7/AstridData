@@ -186,6 +186,12 @@ def process_chunk(c):
     Offset  = pig['FOFGroups/OffsetByType'][gstart:gend]
     Ngroups = len(Length)
     
+    
+    # skip the bug halo 
+    if np.sum(Length, axis=0)[1] < 5:
+        print(f"chunk {c} has less than 5 DM part, probably a problematic halo. Skip it!", flush=True)
+        return  
+    
     # starting and ending particle index of this chunk in FOFGroups
     pstart, pend = Offset[0], Offset[-1] + Length[-1]
     
@@ -205,6 +211,9 @@ def process_chunk(c):
             sgpIDs[p][fof_sort[p]] = sgpIDs[p][sub_sort[p]]
             
         for p in [0,1,4,5]:
+            # no this type of particle in this chunk, nothing to write. 
+            if pstart[p] == pend[p]:
+                continue
             # get orders
             new_order, subID_sorted = get_chunk_newidx_sid(p, Length, Offset, sgpIDs, Ngroups)
             # write orders
@@ -216,6 +225,9 @@ def process_chunk(c):
         print('skipping entire chunk:',c,flush=True)
         sgpIDs = None
         for p in [0,1,4,5]:
+            # no this type of particle in this chunk, nothing to write. 
+            if pstart[p] == pend[p]:
+                continue
             # get orders
             new_order, subID_sorted = get_chunk_newidx_sid(p, Length, Offset, sgpIDs, Ngroups, skipchunk=True)
             # write orders
@@ -292,7 +304,7 @@ if __name__ == "__main__":
     comm.barrier()
     chunk_list, maxgroup_list = get_subfind_chunk(subroot)
 
-    if args.cend < cstart:
+    if args.cend <= cstart:
         cend = len(chunk_list)
     else:
         cend = int(args.cend)

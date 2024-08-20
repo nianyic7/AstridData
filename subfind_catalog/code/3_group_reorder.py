@@ -17,13 +17,15 @@ def rewrite_group(igroup,blockname,p):
 
 
 
-def init_blocks(source,dest,blocknames):
+def init_blocks(source,dest,blocknames,dest_filename):
     pig = BigFile(source)
     blocklists = {p:[] for p in [0,1,4,5]}
     for blockname in blocknames:
         p = int(blockname.split('/')[0])
         dtype,dsize,nfile = dtype_size_nfile(pig,blockname)
-        if gstart == 0:
+        
+        if not os.path.exists(os.path.join(dest_filename, blockname)):
+            #if gstart == 0:
             block = dest.create(blockname, dtype, dsize, nfile)
         else:
             block = dest[blockname]
@@ -60,16 +62,19 @@ if __name__ == "__main__":
     gsize   = pig['FOFGroups/LengthByType'].size
     gstart  = int(args.gstart)
     gend = int(args.gend)
+    partnum = pig["Header"].attrs["NumPartInGroupTotal"]
     
     minpart = int(args.minpart)
     blocknames = list(args.blocknames)
     if rank == 0:
-        print('blocks to process:', blocknames,flush=True)
+        print('blocks to process:', blocknames, flush=True)
+
     
     
     comm.barrier()
     #---------- Initialize all blocks --------------
-    blocklists = init_blocks(source=args.pigfile, dest=dest_w, blocknames=blocknames)
+    blocklists = init_blocks(source=args.pigfile, dest=dest_w, 
+                             blocknames=blocknames, dest_filename=args.dest)
     comm.barrier()
         
     Length  = pig['FOFGroups/LengthByType']
@@ -94,31 +99,54 @@ if __name__ == "__main__":
 
     if gfinal < int(gend):
         gend = gfinal
+
         
     
     # ----------- Split tasks --------------------
     Ngroups = gend - gstart
     
-    Nproc2 = max(1,size//2)
-    Nproc1 = size - Nproc2
-    print("Proc1: %d Proc2: %d"%(Nproc1,Nproc2),flush=True)
+    Nproc3 = max(1,size//3)
+    Nproc2 = max(1,size//3)
+    Nproc1 = size - Nproc2 - Nproc3
     
-    batch1 = max(1000, Ngroups//100)
-    batch2 = Ngroups - batch1
+    batch1 = min(max(1000, Ngroups//20), Ngroups)
+    batch2 = max((Ngroups - batch1)//3, 0)
+    batch3 = max(Ngroups - batch1 - batch2, 0)
 
-    print('Batch1: %d Batch2: %d'%(batch1,batch2),flush=True)
+    exit_flag = 0
+    comm.barrier()
+    if rank == 0:
+        print("Proc1: %d Proc2: %d Proc3 %d"%(Nproc1,Nproc2, Nproc3),flush=True)
+        print('Batch1: %d Batch2: %d Batch3 %d'%(batch1,batch2, batch3),flush=True)
+        print('Gstart: %d Gend: %d Total groups:'%(gstart,gend),Ngroups)
+        print('Saving dir:',args.dest,flush=True)        
     
+        if gend < gstart:
+            print(f"rank {rank}: exit since no chunk needs to run gend {gend} is smaller than gstart {gstart} !")
+            exit_flag = 1
+            
+            
+    exit_flag = comm.allreduce(exit_flag)
+
+    if exit_flag > 0:
+        exit()        
+            
+        
+    comm.barrier()
     if rank <  Nproc1:
         istart = batch1 * rank // Nproc1 + gstart
         iend = batch1 * (rank + 1) // Nproc1 + gstart
-    else:
+    elif rank < (Nproc2 + Nproc1):
         istart = batch1 + batch2 * (rank-Nproc1) // Nproc2 + gstart
         iend = batch1 + batch2 * (rank-Nproc1+1) // Nproc2 + gstart
+    else:
+        istart = batch1 + batch2 + batch3 * (rank - Nproc1 - Nproc2) // Nproc3 + gstart
+        iend = batch1 + batch2 + batch3 * (rank - Nproc1 - Nproc2 + 1) // Nproc3 + gstart
 
-    print('Rank %d starts from Group %d to Group%d'%(rank,istart,iend),flush=True)
-    if rank == 0:
-        print('Gstart: %d Gend: %d Total groups:'%(gstart,gend),Ngroups)
-        print('Saving dir:',args.dest,flush=True)
+    print('Rank %d starts from Group %d to Group %d'%(rank,istart,iend),flush=True)
+    # if rank == 0:
+    #     print('Gstart: %d Gend: %d Total groups:'%(gstart,gend),Ngroups)
+    #     print('Saving dir:',args.dest,flush=True)
     comm.barrier()
 
     
@@ -152,14 +180,59 @@ if __name__ == "__main__":
             print('Rank %d finished all'%(rank),flush=True)
             
             
+            
         #---------------- copy over the smaller groups ----------------
         if (gend==gfinal) and (gfinal < gsize):
-            if rank == size//2:
-                rstart = Offset[gfinal]
-                print('rank %d copying over the small groups starting at:'%rank, rstart)
-                for block,name in blocklists[p]:
-                    data = pig[name][rstart[p]:]
-                    block.write(rstart[p],data)
+            block_num = len(blocklists[p])
+            if block_num > Nproc1:
+                
+                if rank == max(1, size//2-1):
+                    rstart = Offset[gfinal]
+                    #small_len = Lens[gfinal]
+                    small_len = partnum[p] - rstart[p]
+                    small_rank = np.arange(0, small_len, int(5e8))
+                    print(f'rank {rank} copying over the small groups starting at {rstart} with the length of {small_len}', flush=True)
+                    
+                    for block,name in blocklists[p]:
+                        for idx, small_istart in enumerate(small_rank):
+                            if idx == (len(small_rank) -1):
+                                small_iend = small_len
+                            else:
+                                small_iend = small_rank[idx+1]
+                                
+                            print(f'rank {rank} copying the block {name} over the small groups from {small_istart} to {small_iend} at {rstart[p] + small_istart}', flush=True)
+                            
+                        
+                            #data = pig[name][rstart[p]:]
+                            data = pig[name][round(rstart[p] + small_istart) : round(rstart[p] + small_iend)]
+                            block.write(round(rstart[p] + small_istart),data)
+            else:
+                        
+                if (rank < Nproc1) and (rank >= (Nproc1 - block_num)):
+                    p_idx = Nproc1 - rank -1 
+                    rstart = Offset[gfinal]
+
+                    small_len = partnum[p] - rstart[p]
+                    small_rank = np.arange(0, small_len, int(5e8))
+                    block, name = blocklists[p][p_idx]
+                    print(f'rank {rank} copying the block {name} over the small groups from {rstart} with the length of {small_len}', flush=True)      
+                    
+                    for idx, small_istart in enumerate(small_rank):
+                        if idx == (len(small_rank) -1):
+                            small_iend = small_len
+                        else:
+                            small_iend = small_rank[idx+1]
+                            
+                        print(f'rank {rank} copying the block {name} over the small groups from {small_istart} to {small_iend} at {rstart[p] + small_istart}', flush=True)
+                        
+                    
+                        #data = pig[name][rstart[p]:]
+                        data = pig[name][round(rstart[p] + small_istart) : round(rstart[p] + small_iend)]
+                        block.write(round(rstart[p] + small_istart),data)                              
+                        
+                
+                    
+                        
                 
 
 
