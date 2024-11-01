@@ -13,6 +13,13 @@ import pickle
 import warnings
 import argparse
 
+"""
+This is an older version for finding host galaxy properties from PIG data, before subfind was used.
+The major problem is that the fixed-radius mass leads to a bias in the merger host mass estimation compared with
+the single population, which is using subfind data.
+This code is deprecated as of 10/19/2024 and for the final LISA catalog v2.1. Use merger_hostidx_subfind.py and merger_galaxy_info_subfind.py instead.
+"""
+
 extrapolate_scale=1.2 # times the gravitational softening length
 from scipy.optimize import curve_fit
 

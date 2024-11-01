@@ -8,6 +8,7 @@ import argparse
 import time
 
 
+
 #------------------- Arguments -------------------------
 parser = argparse.ArgumentParser(description='save bhdetails as dictionaries')
 
@@ -36,7 +37,7 @@ dtype_all = ('i','q','d','d','d','i','i','3d',\
     'd','d','3d','d','d','i','d','i')
 name2type = {name: dtype for name, dtype in zip(name_all, dtype_all)}
 
-features = ["acBHMass", "BHMass", "BHpos", "BHID", "BHvel", "Mdot", "SwallowID", "z"]
+features = ["BHpos", "BHID", "z"]
 dtype = [name2type[f] for f in features]
 
 #----------------------------------------------------------------------------------
@@ -91,7 +92,7 @@ for details in flist:
     print('Saving to:', save, flush=True)
 
     with open(save, 'wb') as f:
-        pickle.dump(all_info,f)
+        pickle.dump(all_info,f,protocol=4)
         f.close()
         
     print('Done! Total time elapsed:',time.time() - start)
