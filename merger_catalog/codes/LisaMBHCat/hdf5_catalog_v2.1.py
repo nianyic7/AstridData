@@ -62,7 +62,9 @@ import sys
 
 __VERSION__ = '2.1' # catalog version
 DEBUG = False
-DEF_FILENAME = "example-sim"
+DEF_FILENAME = "/hildafs/home/nianyic/scratch1/Astrid_data/lisa_mbhcat/Astrid"
+M_DIR = "/hildafs/home/nianyic/scratch1/Astrid_data/lisa_mbhcat/"
+ALL_DIR = "/hildafs/home/nianyic/scratch1/Astrid_data/lisa_mbhcat/"
 np.random.seed(5)
 
 ############################################################################################
@@ -112,33 +114,33 @@ def input_data():
     metadata = {
         # ---- Header data - identifying information for the dataset
         # REQUIRED
-        'SimulationName': 'FakeName',
-        'SimulationVersion': 'FakeVersion',
+        'SimulationName': 'Astrid',
+        'SimulationVersion': '1.0',
         'ModelType': 'Hydro',
         'Version': __VERSION__,
         'Date': str(datetime.datetime.now()),
-        'Contributor': ["Luke Zoltan Kelley", "Matteo Bonetti"],
-        'Email': ["LZKelley@berkeley.edu", "mbonetti"],
-        'Principal': ["Marta Volonteri", "Marie Curie"],
-        'Reference': ["DOI1", "DOI2"],
+        'Contributor': ["Nianyi Chen", "Yueying Ni"],
+        'Email': ["nianyi.chen7@gmail.com", "yueying.ni@cfa.harvard.edu"],
+        'Principal': ["Tiziana Di Matteo"],
+        'Reference': ["10.1093/mnras/stac1432", "10.1093/mnras/stac351", "10.1093/mnras/stad3084"],
         # OPTIONAL:
-        'Website': ["https://www.github.com/mbonetti90/MBHCatalogs"],
+        'Website': ["https://astrid.psc.edu"],
 
         # ---- Model parameters - metadata specification for simulation(s) used to construct catalog
         # REQUIRED
-        'HubbleConstant': 70, #km s^-1 Mpc^-1
-        'OmegaMatter': 0.3,
-        'OmegaLambda': 0.7,
-        'BoxSize': 1e6, # cMpc
-        'MinBHSeedMass': 1e6, #M_sun
-        'MinRedshift': 0,
-        'MaxRedshift': 10,
-        'StellarMassResolution': 3e5, # M_sun
-        'DarkMatterMassResolution': 5e6, # M_sun
-        'SpatialResolution': np.nan, # kpc
+        'HubbleConstant': 67.74, #km s^-1 Mpc^-1
+        'OmegaMatter': 0.3089,
+        'OmegaLambda': 0.6911,
+        'BoxSize': 369, # cMpc
+        'MinBHSeedMass': 4.4e4, #M_sun
+        'MinRedshift': 0.2,
+        'MaxRedshift': 99,
+        'StellarMassResolution': 4.7e5, # M_sun
+        'DarkMatterMassResolution': 9.63e6, # M_sun
+        'SpatialResolution': 1.5, # kpc
         # OPTIONAL:
-        'MinimumDarkMatterHaloMass': 1e6, # M_sun
-        'GasMassResolution': 3e5, # M_sun
+        'MinimumDarkMatterHaloMass': 3e8, # M_sun
+        'GasMassResolution': 1.87e6, # M_sun
     }
     #*********************************************************#
     #*********************************************************#
@@ -202,17 +204,21 @@ def MBHB_no_delay(metadata):
     #*********************************************************#
 
     # generate fake binary properties
-    N_binaries = 1000
-    m1 = np.random.normal(loc=1e7, scale=1e6, size=N_binaries)
-    m2 = np.random.normal(loc=1e7, scale=1e6, size=N_binaries)
+    mdata = np.load(M_DIR + "lisa_mcat_v2.1_z0.57.npy")
+
+    N_binaries = len(mdata)
+    m1 = mdata["m1"]
+    m2 = mdata["m2"]
     m1, m2 = np.max([m1, m2], axis=0), np.min([m1, m2], axis=0)
-    z = 0.01 + np.random.uniform(0, 10, size=N_binaries)
-    sepa = 10.0 ** np.random.uniform(2.0, 4.0, size=N_binaries)
+    
+    z = mdata["z"]
+    sepa = mdata["dr"]  # in kpc unit
 
     # generate fake binary-host galaxy-remnant properties
-    mstar = np.random.normal(loc=1e10, scale=1e8, size=N_binaries)
-    mdm = mstar * np.maximum(1.0, np.random.normal(loc=10.0, scale=1.0, size=N_binaries))
-    zgal = z - np.random.uniform(0, 0.001, size=N_binaries)
+    mstar = mdata["mstot"]
+    mdm = -np.ones(len(mdata["mstot"]))
+    zgal = mdata["zsnap"]
+    print("zgal:", mdata["zsnap"][:10])
     R50 = np.random.normal(loc=3, scale=0.1, size=N_binaries)
 
     # number density
@@ -224,13 +230,12 @@ def MBHB_no_delay(metadata):
 
     # provide an explanation of the merger criterion, modify the string
     metadata['NoDelay'] = (
-        "mergers occur when two MBH particles come within a gravitational softening length of "
+        "mergers occur when two MBH particles come within 2*gravitational softening length of "
         "eachother, and the kinetic energy of the pair is less than the gravitational "
         "potential energy between them.")
     
     metadata['CommentsNoDelay'] = (
-        "Any additional information you consider relevant for any clarification, i.e."
-        "model special features, recipe to deal with MBH evolution etc.")
+        "The simulation contains subgrid dynamical friction model, so separation should be used as the initial separation for post-processing instead of galaxy sizes")
 
     #**********************************************************#
     #**********************************************************#
@@ -291,7 +296,7 @@ def MBHB_delay(metadata):
     #*********************************************************#
 
     # set to true if data for a model with delays are available
-    delay_model = True
+    delay_model = False
 
     # generate fake binary properties
     N_binaries = 1000
@@ -368,7 +373,7 @@ def MBHB_delay(metadata):
             "Galaxies": {
                 'RemnantStellarMass': mstar_delay,
                 'RemnantRedshift': zgal_delay,
-                'RemnantR50': np.ones(len(R50))*np.nan,
+                'RemnantR50': -np.ones(len(R50)),
                 # OPTIONAL:
                 'RemnantDarkMatterMass': mdm_delay,
             }
@@ -415,27 +420,37 @@ def MBH_population(metadata):
     
     min_redshift = np.inf
     for tarz in TARGET_REDSHIFTS:
-        # simulation snapshots may not exactly match target redshifts
-        myz = tarz + np.random.uniform(-0.01, +0.01)
+        if tarz == 5:
+            data = np.load(ALL_DIR + "lisa_mbhcat_single_v2.1_z5.npy")
+            print("loading from:", ALL_DIR + "lisa_mbhcat_single_v2.1_z5.npy")
+        elif tarz == 2:
+            data = np.load(ALL_DIR + "lisa_mbhcat_single_v2.1_z2.npy")
+            print("loading from:", ALL_DIR + "lisa_mbhcat_single_v2.1_z2.npy")
+        elif tarz == 1:
+            data = np.load(ALL_DIR + "lisa_mbhcat_single_v2.1_z1.npy")
+            print("loading from:", ALL_DIR + "lisa_mbhcat_single_v2.1_z1.npy")
+        else:
+            continue
+        myz = tarz
         # store actual simulation redshifts
         allbh_redshifts.append(myz)
         myz = np.maximum(myz, 1.0e-4)
         # generate a key for this redshift (i.e. string specification in consistent format)
         zkey = f"Z{myz:011.8f}"
         # number of BHs in this snapshot
-        numbhs = np.random.randint(100, 200)
+        numbhs = len(data)
         # store the number of BHs in the lowest-redshift snapshot being stored
         if myz < min_redshift:
             min_redshift = myz
             num_allbhs = numbhs
 
         # generate fake BH data
-        mass = 10.0 ** np.random.uniform(6, 10, numbhs)
-        mdot = 10.0 ** np.random.normal(-3.0, 1.0, numbhs)
+        mass = data["bhmass"]
+        mdot = data["mdot"]
         radEff = 0.1*np.ones(len(mdot)) # example with fixed rad efficiency for all BHs
         # generate fake galaxy data
-        mstar = mass * np.random.normal(3e2, 10.0, numbhs)
-        mdm = mstar * np.random.normal(8.0, 1.0, numbhs)
+        mstar = data["mstot"]
+        mdm = data["mdm"]
 
         # number density
         W = 1/metadata["BoxSize"]**3*np.ones(len(mass))
@@ -455,6 +470,7 @@ def MBH_population(metadata):
         }
         # add to combined allbhs data
         allbhs[zkey] = temp_data
+        print(zkey)
 
     metadata['CommentsAllBHs'] = (
         "Any additional information you consider relevant for any clarification, i.e."
@@ -657,12 +673,16 @@ def write_hdf5(fname, metadata, allbhs, binaries_nodelay, binaries_delay):
             # iterate over each element of these groups
             # e.g. "PrimaryMass" ...  and "RemanntStellarMass" ...
             for key, vals in group_vals.items():
+                print("key0", key)
                 if DEBUG:
                     print(f"writing {group.name}[{key}] = {type(vals)}, {vals.shape}, {vals.dtype}")
                 # e.g. "Binaries/NoDelay/BlackHoles/PrimaryMass"
                 tmp = group.create_dataset(key, data=vals)
+                print("key", key)
                 tmp.attrs.create('units',data=str(DATA_BINARIES[group_key][key][0]))
-
+                print("key2", key)
+            print("flag1")
+        
         if (binaries_delay is not None) and (len(binaries_delay.keys()) > 0):
             delay_group = binaries_group.create_group("Delay")
             # iterate over "BlackHoles" and "Galaxies"
