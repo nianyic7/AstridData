@@ -437,8 +437,8 @@ def set_path():
         bh_reduce_file = f"{root}/BH_details_bigfile{'2' if snap > '347' else ''}/BH-Details-R{snap}"
         output_data_file = f"{root}/BH-mergers/bh-merger-extended-R{snap}"
     elif cluster == "frontera":
-        bh_reduce_file = f"/scratch3/06431/yueyingn/BH-detail-reduce/BH-Details-R{snap}"
-        output_data_file = f"mergers_below2/bh-merger-extended-R{snap}"
+        bh_reduce_file = f"/home1/08942/nianyic/scratch3/Astrid/bhdetails/BH-Details-R{snap}"
+        output_data_file = f"/home1/08942/nianyic/work/Astrid/mergers/extended/bh-merger-extended-R{snap}"
     elif cluster == "bridges":
         root = "/jet/home/nianyic/scratch1/Astrid/bhdetails-chopped"
         bh_reduce_file = f"{root}/BH-Details-R{snap}"
@@ -463,6 +463,11 @@ def get_all_details_file():
             flist = flist + sorted(glob.glob(f"{d}/BH-Details-R*"))
         flist.remove(f"{root}/BH_details_bigfile/BH-Details-R087")
         fidx_to_path = {i: f for i, f in enumerate(flist)}
+        snap_to_fidx = {int(f.split("-R")[-1]): i for i, f in enumerate(flist)}
+    elif cluster == "frontera":
+        root = "/home1/08942/nianyic/scratch3/Astrid/bhdetails"                 
+        flist = flist + sorted(glob.glob(f"{d}/BH-Details-R*"))            
+        fidx_to_path = {i: f for i, f in enumerate(flist)}                     
         snap_to_fidx = {int(f.split("-R")[-1]): i for i, f in enumerate(flist)}
     elif cluster == "bridges":
         root = "/jet/home/nianyic/scratch1/Astrid/bhdetails-chopped"
