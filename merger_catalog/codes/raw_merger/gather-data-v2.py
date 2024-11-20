@@ -83,14 +83,14 @@ uid, uidx = np.unique(swbh, return_index=True)
 mergers = mergers[uidx]
 
 print("unique mergers:", len(mergers))
-savedir = "/hildafs/home/nianyic/scratch1/Astrid_data/lisa_mbhcat/lisa_mcat_v2.0_nogal.npy"
-np.save(savedir, mergers)
-print("saved catalog to:", savedir)
+# savedir = "/hildafs/home/nianyic/scratch1/Astrid_data/lisa_mbhcat/lisa_mcat_v2.0_nogal.npy"
+# np.save(savedir, mergers)
+# print("saved catalog to:", savedir)
 
 
 fig, ax = plt.subplots(1, 1, figsize=(6, 5))
 vsim = 250**3
-zbin = np.linspace(1.3,6,20)
+zbin = np.linspace(0.3,6,20)
 dz = zbin[1:] - zbin[:-1]
 zc = 0.5*(zbin[1:]+zbin[:-1])
 rc = np.array([cosmo.comovingDistance(0.,zz) for zz in zc])
