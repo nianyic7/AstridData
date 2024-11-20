@@ -32,7 +32,7 @@ class BHType:
             '3d','d','d','3d','d',\
             '3d','3d','3d','3d','d','d',\
             'd','d','3d','d','d','i','d','i')
-        self.dtype_small = ('i','q','f','f','f','i','i','3f',\
+        self.dtype_lean = ('i','q','f','f','f','i','i','3f',\
             'f','f','3f','3f','f','f',\
             'f','q','q','i','i',\
             '3f','f','f','3f','f',\
@@ -43,7 +43,7 @@ class BHType:
             name_sel = self.name_all
         self.name_sel = name_sel
         self.name2type = {name: dtype for name, dtype in zip(self.name_all, self.dtype_all)}
-        self.name2type_small = {name: dtype for name, dtype in zip(self.name_all, self.dtype_small)}
+        self.name2type_lean = {name: dtype for name, dtype in zip(self.name_all, self.dtype_lean)}
 
 
     @property
@@ -58,26 +58,10 @@ class BHType:
         return np_type
 
 
-def get_length_offset(flist):
-    Length = []
-    Offset = []
-    offset = 0
-    data = np.zeros(1, dtype=BHTYPE.TypeAll)
-    nsingle = data.nbytes
-    print(f"Size of single element: {nsingle} bytes")
-
-    for ff in flist[:]:
-        file_stats = os.stat(ff)
-        Length.append(file_stats.st_size // nsingle)
-        Offset.append(offset)
-        offset += Length[-1]
-    return Length, Offset
-
-
 def init_block(bf_w, blocknames, nfile):
     block_dict = {}
     for blockname in blocknames:
-        dtype = BHTYPE.name2type_small[blockname]
+        dtype = BHTYPE.name2type_lean[blockname]
         dsize = NTOT
         block = bf_w.create(blockname, dtype, dsize, nfile)
         block_dict[blockname] = block
@@ -117,15 +101,7 @@ if __name__ == "__main__":
     if len(ifilelist) == 0:
         print(f"No file to process", flush=True)
         sys.exit(0)
-        
-#     if len(ifilelist) == 1:
-#         print(f"Only one file, not need to combine, copying", flush=True)
-#         print(f"cp -r {ifilelist[0]} {args.ofile}")
-#         os.system(f"cp -r {ifilelist[0]} {args.ofile}")
-#         sys.exit(0)
 
-        
-        
     # create ofile
     bf_w = BigFile(args.ofile, create=True)
     # get total data size
