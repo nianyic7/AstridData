@@ -6,12 +6,9 @@ import os, sys
 from mpi4py import MPI
 from bigfile import FileMPI
 import argparse
+from natsort import natsorted
 
-# PRIME_COL=['acBHMass', 'BHMass', 'Density', ,  'Mdyn', 'NumDM', 'V1sumDM',
-# 'acMass', 'BHpos', 'Encounter', 'KineticFdbkEnergy','MgasEnc', 'Swallowed', 'V2sumDM',
-# 'BHID', 'BHvel', 'Entropy', 'DFAccel','DragAccel','GravAccel', 'Mdot', 'Mtrack', 'SwallowID',  'z']
 
-# # SECON_COL = ['BHID', 'timebin', 'KEflag', '']
 
 SEL_COL = ['BHID','BHMass','Mdot','Density','timebin','Encounter','MinPos',\
              'MinPot','Entropy','GasVel','acMom','acMass','acBHMass',\
@@ -35,11 +32,18 @@ class BHType:
             '3d','d','d','3d','d',\
             '3d','3d','3d','3d','d','d',\
             'd','d','3d','d','d','i','d','i')
+        self.dtype_small = ('i','q','f','f','f','i','i','3f',\
+            'f','f','3f','3f','f','f',\
+            'f','q','q','i','i',\
+            '3f','f','f','3f','f',\
+            '3f','3f','3f','3f','f','f',\
+            'f','f','3f','f','f','i','f','i')
 
         if name_sel is None:
             name_sel = self.name_all
         self.name_sel = name_sel
         self.name2type = {name: dtype for name, dtype in zip(self.name_all, self.dtype_all)}
+        self.name2type_small = {name: dtype for name, dtype in zip(self.name_all, self.dtype_small)}
 
 
     @property
@@ -52,13 +56,6 @@ class BHType:
         dtype_sel = [dtype for name, dtype in zip(self.name_all, self.dtype_all) if name in name_sel]
         np_type = np.dtype({'names':name_sel, 'formats':dtype_sel})
         return np_type
-
-
-def get_binary_files(ifile):
-    filelist = []
-    for f in glob.glob(ifile + "/*"):
-        filelist.append(f)
-    return filelist
 
 
 def get_length_offset(flist):
@@ -80,13 +77,11 @@ def get_length_offset(flist):
 def init_block(bf_w, blocknames, nfile):
     block_dict = {}
     for blockname in blocknames:
-        dtype = BHTYPE.name2type[blockname]
+        dtype = BHTYPE.name2type_small[blockname]
         dsize = NTOT
         block = bf_w.create(blockname, dtype, dsize, nfile)
         block_dict[blockname] = block
-
-        if rank == 0:
-            print("Initizlized block:", blockname, flush=True)
+        print("Initizlized block:", blockname, flush=True)
     return block_dict
 
 if __name__ == "__main__":
@@ -101,6 +96,9 @@ if __name__ == "__main__":
         help="path of the input file (end without /)",
     )
     parser.add_argument(
+        "--snap", required=True, type=int, help="snapshot number"
+    )
+    parser.add_argument(
         "--ofile",
         required=True,
         type=str,
@@ -111,42 +109,50 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    # ----------- MPI Init ----------------
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    size = comm.Get_size()
-    bf_w = FileMPI(comm, args.ofile, create=True)
-    nfiles = int(args.nfiles)
-    
 
     # --------------------------
     BHTYPE = BHType(SEL_COL)
-    filelist = get_binary_files(args.ifile)
-    Nraw = len(filelist)
-    if rank == 0:
-        print(f"Total number of files: {Nraw}", flush=True)
 
-    # get Nperfile
-    Length, Offset = get_length_offset(filelist)
-    NTOT = sum(Length)
-    comm.barrier()
-    if rank == 0:
-        print(f"Total number of data: {NTOT}", flush=True)
-    # initialize bf
-    block_dict = init_block(bf_w, blocknames=SEL_COL, nfile=nfiles)
-    comm.barrier()
+    ifilelist = natsorted(glob.glob(f"{args.fileroot}/BlackholeDetails-R{args.snap:03d}*"))
+    if len(ifilelist) == 0:
+        print(f"No file to process", flush=True)
+        sys.exit(0)
+        
+#     if len(ifilelist) == 1:
+#         print(f"Only one file, not need to combine, copying", flush=True)
+#         print(f"cp -r {ifilelist[0]} {args.ofile}")
+#         os.system(f"cp -r {ifilelist[0]} {args.ofile}")
+#         sys.exit(0)
 
-    # split task and io
-    fstart = Nraw * rank // size
-    fend = Nraw * (rank + 1) // size
-    print("Rank %03d will process file %03d to file %03d" % (rank, fstart, fend), flush=True)
-    for i in range(fstart, fend):
-        file = filelist[i]
-        data = read_binary_file(file)
+        
+        
+    # create ofile
+    bf_w = BigFile(args.ofile, create=True)
+    # get total data size
+    len_list = []
+    off_list = []
+    offset = 0
+    for file in ifilelist:
+        print(f"Reading file: {file}", flush=True)
+        bf = BigFile(file)
+        size = bf["BHID"].size
+        print(f"Size of file: {size}", flush=True)
+        len_list.append(size)
+        off_list.append(offset)
+        offset += len_list[-1]
+    NTOT = sum(len_list)
+
+
+    # initialize block
+    block_dict = init_block(bf_w, blocknames=SEL_COL, nfile=args.nfiles)
+    # io block
+    for i, file in enumerate(ifilelist):
+        bf = BigFile(file)
+        print(f"Processing file {file}", flush=True)
         for blockname in SEL_COL:
+            print(f"Block {blockname}", flush=True)
             block = block_dict[blockname]
-            block.write(Offset[i], data[blockname])
-        print("Rank %03d finished processing file %03d" % (rank, i), flush=True)
-    comm.barrier()
-    if rank == 0:
-        print("Done!", flush=True)
+            block.write(off_list[i], bf[blockname][:])
+        print(f"Finished processing file {file}", flush=True)
+    
+    print("Done!", flush=True)

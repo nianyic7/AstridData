@@ -51,7 +51,7 @@ def load_bh_data(filename):
     bhd = BigFile(filename)
     # load partial data to check if there is merger event
     acBHMass_ds = bhd.open('acBHMass')[:]
-    swallowed_ds = bhd.open('Swallowed')[:]
+    swallowed_ds = bhd.open('Swallowed')[:].astype(np.bool)
     # check if no merger event
     mask0 = (acBHMass_ds > 1e-8) & (swallowed_ds == 0)
     if np.sum(mask0) < 1:
@@ -68,7 +68,8 @@ def load_bh_data(filename):
     swallowed_ds = swallowed_ds[sort_indices]
 
     swallowID_ds = bhd.open('SwallowID')[:][sort_indices]
-    BHpos_ds = bhd.open('BHpos')[:][sort_indices]
+    BHpos_ds = bhd.open('BHpos')[:].astype(np.float32)
+    BHpos_ds = BHpos_ds[sort_indices]
     BHvel_ds = bhd.open('BHvel')[:][sort_indices]
     BHMass_ds = bhd.open('BHMass')[:][sort_indices]
     BHMdot_ds = bhd.open('Mdot')[:][sort_indices]
@@ -104,7 +105,8 @@ def get_previous_chunk(snap):
     BHID_pr = BHID_pr[sort_indices]
     redshift_pr = redshift_pr[sort_indices]
 
-    BHpos_pr = bf_prev.open('BHpos')[:][mask][sort_indices]
+    BHpos_pr = bf_prev.open('BHpos')[:][mask].astype(np.float32)
+    BHpos_pr = BHpos_pr[sort_indices]
     BHvel_pr = bf_prev.open('BHvel')[:][mask][sort_indices]
     BHMass_pr = bf_prev.open('BHMass')[:][mask][sort_indices]
     BHMdot_pr = bf_prev.open('Mdot')[:][mask][sort_indices]

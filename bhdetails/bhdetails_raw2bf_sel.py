@@ -7,10 +7,11 @@ from mpi4py import MPI
 from bigfile import FileMPI
 import argparse
 
-SEL_COL=['acBHMass', 'BHMass', 'Density', 'KEflag',  'Mdyn', 'NumDM', 'V1sumDM',
-'acMass', 'BHpos', 'Encounter', 'KineticFdbkEnergy','MgasEnc', 'Swallowed', 'V2sumDM',
-'BHID', 'BHvel', 'Entropy', 'DFAccel','DragAccel','GravAccel', 'Mdot', 'Mtrack', 'SwallowID',  'z']
-
+#SEL_COL=['acBHMass', 'BHMass', 'Density', 'KEflag',  'Mdyn', 'NumDM', 'V1sumDM',
+#'acMass', 'BHpos', 'Encounter', 'KineticFdbkEnergy','MgasEnc', 'Swallowed', 'V2sumDM',
+#'BHID', 'BHvel', 'Entropy', 'DFAccel','DragAccel','GravAccel', 'Mdot', 'Mtrack', 'SwallowID',  'z']
+SEL_COL=["acMom",  "CountProgs", "DFAccel", "DragAccel",  "CountProgs", "Fdbk", "GasVel", 
+"GravAccel", "MinPos", "MinPot",  "srParticles",  "srVel", "srDensity", "srDisp", "timebin"]
 
 class BHType:
     def __init__(self, name_sel=None):
