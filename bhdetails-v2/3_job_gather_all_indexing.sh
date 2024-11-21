@@ -11,4 +11,4 @@ source ~/.bashrc
 conda activate default
 
 
-srun  python3 save_indexing.py
+srun  python3 3_gather_all_indexing.py
