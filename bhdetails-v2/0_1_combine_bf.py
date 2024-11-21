@@ -50,6 +50,12 @@ class BHType:
     def TypeAll(self):
         np_type = np.dtype({'names':self.name_all, 'formats':self.dtype_all})
         return np_type
+    
+    @property
+    def TypeLean(self):
+        np_type = np.dtype({'names':self.name_all, 'formats':self.dtype_lean})
+        return np_type
+    
     @property
     def TypeSel(self):
         name_sel = [name for name in self.name_all if name in name_sel]

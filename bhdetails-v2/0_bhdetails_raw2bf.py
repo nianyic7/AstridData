@@ -35,23 +35,37 @@ class BHType:
             '3d','d','d','3d','d',\
             '3d','3d','3d','3d','d','d',\
             'd','d','3d','d','d','i','d','i')
+        self.dtype_lean = ('i','q','f','f','f','i','i','3f',\
+            'f','f','3f','3f','f','f',\
+            'f','q','q','i','i',\
+            '3f','f','f','3f','f',\
+            '3f','3f','3f','3f','f','f',\
+            'f','f','3f','f','f','i','f','i')
 
         if name_sel is None:
             name_sel = self.name_all
         self.name_sel = name_sel
         self.name2type = {name: dtype for name, dtype in zip(self.name_all, self.dtype_all)}
+        self.name2type_lean = {name: dtype for name, dtype in zip(self.name_all, self.dtype_lean)}
 
 
     @property
     def TypeAll(self):
         np_type = np.dtype({'names':self.name_all, 'formats':self.dtype_all})
         return np_type
+    
+    @property
+    def TypeLean(self):
+        np_type = np.dtype({'names':self.name_all, 'formats':self.dtype_lean})
+        return np_type
+    
     @property
     def TypeSel(self):
         name_sel = [name for name in self.name_all if name in name_sel]
         dtype_sel = [dtype for name, dtype in zip(self.name_all, self.dtype_all) if name in name_sel]
         np_type = np.dtype({'names':name_sel, 'formats':dtype_sel})
         return np_type
+
 
 
 def get_binary_files(ifile):
@@ -70,12 +84,15 @@ def get_length_offset(flist):
     print(f"Size of single element: {nsingle} bytes")
 
     for ff in flist[:]:
-        file_stats = os.stat(ff)
+        file_stats = os.stat(ff) # size of file in bytes
+        # add a check for data corruption
+        residual = file_stats.st_size % nsingle
+        assert residual == 0, "Data structure not aligned!! Stop"
+        
         Length.append(file_stats.st_size // nsingle)
         Offset.append(offset)
         offset += Length[-1]
     return Length, Offset
-
 
         
 def read_binary_file(file):
@@ -163,7 +180,8 @@ if __name__ == "__main__":
         data = read_binary_file(file)
         for blockname in SEL_COL:
             block = block_dict[blockname]
-            block.write(Offset[i], data[blockname])
+            field = data[blockname].astype(BHTYPE.name2type_lean[blockname])
+            block.write(Offset[i], field)
         print("Rank %03d finished processing file %03d" % (rank, i), flush=True)
     comm.barrier()
     if rank == 0:
