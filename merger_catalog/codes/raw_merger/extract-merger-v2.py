@@ -51,7 +51,7 @@ def load_bh_data(filename):
     bhd = BigFile(filename)
     # load partial data to check if there is merger event
     acBHMass_ds = bhd.open('acBHMass')[:]
-    swallowed_ds = bhd.open('Swallowed')[:].astype(np.bool)
+    swallowed_ds = bhd.open('Swallowed')[:].astype(bool)
     # check if no merger event
     mask0 = (acBHMass_ds > 1e-8) & (swallowed_ds == 0)
     if np.sum(mask0) < 1:
